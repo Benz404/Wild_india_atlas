@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Wild India Atlas — India's rarest wildlife, mapped by state</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%232d6a4f'/><text x='16' y='22' text-anchor='middle' font-size='18'>🌿</text></svg>">
+
+<style>
+/* ── reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Inter",system-ui,sans-serif;background:#f7f8f5;color:#1a1a1a;-webkit-font-smoothing:antialiased;line-height:1.5}
+
+/* ── header ── */
+header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid #e8eae4}
+.header-inner{max-width:1280px;margin:0 auto;padding:0 32px;height:62px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0}
+.logo-icon{font-size:22px}
+.logo-name{font-size:16px;font-weight:700;letter-spacing:-.02em;color:#111}
+.logo-name span{color:#2d6a4f}
+.logo-badge{font-size:9px;font-weight:700;letter-spacing:.06em;background:#ecfdf5;color:#2d6a4f;border:1px solid #d1fae5;padding:2px 6px;border-radius:4px}
+.header-nav{display:flex;align-items:center;gap:2px}
+.nav-pill{font-size:13.5px;font-weight:500;color:#6b7280;text-decoration:none;padding:6px 12px;border-radius:8px;transition:background .12s,color .12s;white-space:nowrap}
+.nav-pill:hover{background:#f3f4f6;color:#111}
+.nav-pill.active{background:#f0fdf4;color:#2d6a4f;font-weight:600}
+.nav-cta{font-size:13px;font-weight:600;color:#fff;background:#2d6a4f;text-decoration:none;padding:7px 16px;border-radius:8px;transition:background .12s;white-space:nowrap;margin-left:8px}
+.nav-cta:hover{background:#1a4d36}
+
+/* ── hero ── */
+.hero{background:#fff;border-bottom:1px solid #e8eae4;padding:0}
+.hero-inner{max-width:1280px;margin:0 auto;padding:56px 32px 52px;display:grid;grid-template-columns:1fr 480px;gap:64px;align-items:center}
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr;gap:32px;padding:40px 24px 36px}}
+.hero-left{}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2d6a4f;background:#f0fdf4;border:1px solid #d1fae5;padding:5px 12px;border-radius:999px;margin-bottom:20px}
+.hero-h1{font-size:clamp(32px,5vw,52px);font-weight:700;letter-spacing:-.03em;line-height:1.08;margin-bottom:16px;color:#111}
+.hero-h1 .green{color:#2d6a4f}
+.hero-desc{font-size:16px;color:#6b7280;max-width:44ch;line-height:1.65;margin-bottom:28px}
+.hero-actions{display:flex;align-items:center;gap:12px}
+.btn-primary{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:#fff;background:#2d6a4f;text-decoration:none;padding:10px 20px;border-radius:9px;border:none;cursor:pointer;font-family:inherit;transition:background .12s}
+.btn-primary:hover{background:#1a4d36}
+.btn-ghost{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:#374151;background:#fff;text-decoration:none;padding:10px 20px;border-radius:9px;border:1.5px solid #e5e7eb;cursor:pointer;font-family:inherit;transition:border-color .12s,color .12s}
+.btn-ghost:hover{border-color:#2d6a4f;color:#2d6a4f}
+
+/* hero right: stat cards */
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hstat{background:#f7f8f5;border:1px solid #e8eae4;border-radius:14px;padding:20px 20px 18px;position:relative;overflow:hidden}
+.hstat::after{content:attr(data-emoji);position:absolute;right:14px;top:14px;font-size:28px;opacity:.18;line-height:1}
+.hstat-n{font-size:30px;font-weight:700;letter-spacing:-.03em;color:#2d6a4f;line-height:1;margin-bottom:5px}
+.hstat-l{font-size:12px;color:#9ca3af;font-weight:500}
+.hstat-tag{display:inline-block;font-size:10px;font-weight:700;color:#fff;padding:2px 7px;border-radius:4px;margin-top:8px;letter-spacing:.04em}
+.hstat-tag.green{background:#2d6a4f}
+.hstat-tag.amber{background:#d97706}
+.hstat-tag.blue{background:#2563eb}
+.hstat-tag.violet{background:#7c3aed}
+.hstat.featured{background:#f0fdf4;border-color:#d1fae5}
+.hstat.featured .hstat-n{color:#16a34a}
+
+/* ── main wrap ── */
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px 80px}
+@media(max-width:640px){.wrap{padding:0 20px 60px}}
+
+/* ── section label ── */
+.sec-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin:48px 0 16px;display:flex;align-items:center;gap:10px}
+.sec-label::after{content:"";flex:1;height:1px;background:#e8eae4}
+
+/* ── species cards grid ── */
+.sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:12px}
+
+.sp-card{
+  background:#fff;border:1.5px solid #e8eae4;border-radius:14px;
+  padding:18px 18px 16px;cursor:pointer;position:relative;overflow:hidden;
+  transition:border-color .15s,box-shadow .15s,transform .1s;
+}
+.sp-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:#e8eae4;transition:background .15s}
+.sp-card:hover{border-color:#2d6a4f;box-shadow:0 4px 18px rgba(45,106,79,.10);transform:translateY(-2px)}
+.sp-card:hover::before{background:#2d6a4f}
+.sp-card[data-sel="1"]{border-color:#2d6a4f;background:#f9fdfb;box-shadow:0 4px 18px rgba(45,106,79,.12)}
+.sp-card[data-sel="1"]::before{background:#2d6a4f}
+.sp-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.sp-em{font-size:26px;line-height:1}
+.sp-badge{font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:5px;color:#fff;letter-spacing:.04em}
+.sp-badge.CR{background:#dc2626}.sp-badge.EN{background:#d97706}.sp-badge.VU{background:#b45309}
+.sp-name{font-size:14px;font-weight:600;color:#111;line-height:1.2;margin-bottom:3px}
+.sp-sci{font-size:11.5px;color:#9ca3af;font-style:italic;margin-bottom:10px}
+.sp-pop{font-size:22px;font-weight:700;color:#2d6a4f;letter-spacing:-.02em;line-height:1}
+.sp-pop.word{font-size:14px;font-weight:600}
+.sp-unit{font-size:11px;color:#9ca3af;margin-top:3px}
+
+/* ── atlas section ── */
+.atlas-layout{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start}
+@media(max-width:960px){.atlas-layout{grid-template-columns:1fr}}
+
+/* map card */
+.map-card{background:#fff;border:1.5px solid #e8eae4;border-radius:14px;overflow:hidden}
+.map-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #f3f4f6}
+.map-head-title{font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em}
+.map-head-peak{font-size:13px;color:#2d6a4f;font-weight:600}
+svg.map{width:100%;height:auto;display:block}
+.state{stroke:#fff;stroke-width:.8px;cursor:pointer;transition:fill .42s ease}
+.state:hover{stroke:#374151;stroke-width:1.3px}
+.state.sel{stroke:#2d6a4f;stroke-width:1.8px;filter:drop-shadow(0 0 4px rgba(45,106,79,.3))}
+.map-foot{display:flex;align-items:center;gap:14px;padding:10px 18px 14px;flex-wrap:wrap}
+.legend-ramp{display:flex;align-items:center;gap:8px;font-size:11px;color:#9ca3af}
+.rampbar{width:80px;height:6px;border-radius:3px;background:linear-gradient(90deg,#d1fae5,#2d6a4f);border:1px solid #e8eae4}
+.legend-dot{display:flex;align-items:center;gap:5px;font-size:11px;color:#9ca3af}
+.legend-dot i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* dossier panel */
+.dossier-panel{display:flex;flex-direction:column;gap:12px}
+
+.empty-state{background:#fff;border:1.5px solid #e8eae4;border-radius:14px;padding:40px 28px;text-align:center}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:.35}
+.empty-text{font-size:14px;color:#9ca3af;line-height:1.6}
+
+/* info card */
+.info-card{background:#fff;border:1.5px solid #e8eae4;border-radius:14px;padding:22px}
+.ic-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ic-em{font-size:30px;line-height:1}
+.ic-name{font-size:20px;font-weight:700;letter-spacing:-.02em;color:#111}
+.ic-sci{font-size:12.5px;color:#9ca3af;font-style:italic;margin-top:2px}
+.ic-status{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:5px;color:#fff;margin-top:4px;display:inline-block}
+.ic-status.CR{background:#dc2626}.ic-status.EN{background:#d97706}.ic-status.VU{background:#b45309}
+.ic-pop{font-size:42px;font-weight:700;color:#2d6a4f;letter-spacing:-.03em;line-height:1}
+.ic-pop.word{font-size:24px}
+.ic-unit{font-size:12px;color:#9ca3af;margin-top:4px}
+.ic-year{font-size:11px;color:#9ca3af;margin-top:3px;font-weight:500}
+.ic-divider{height:1px;background:#f3f4f6;margin:14px 0}
+.ic-blurb{font-size:13.5px;color:#374151;line-height:1.65}
+.ic-source{font-size:11px;color:#c4c9c0;margin-top:14px;line-height:1.5}
+.ic-cta{width:100%;margin-top:14px;padding:10px 16px;background:#2d6a4f;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:center;transition:background .12s}
+.ic-cta:hover{background:#1a4d36}
+
+/* sparkline */
+.spark{margin:12px 0 4px}
+
+/* snapshot card */
+.snap-card{background:#f7f8f5;border:1.5px solid #e8eae4;border-radius:14px;padding:18px}
+.snap-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.snap-more{font-size:12px;font-weight:600;color:#2d6a4f;background:none;border:none;cursor:pointer;font-family:inherit;letter-spacing:0;text-transform:none}
+.snap-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eeefe9}
+.snap-row:last-child{border-bottom:none}
+.snap-label{font-size:13px;color:#6b7280}
+.snap-val{font-size:13px;font-weight:700;color:#111}
+.snap-val.green{color:#2d6a4f}
+
+/* ── tooltip ── */
+.tip{position:fixed;pointer-events:none;z-index:200;background:#fff;border:1px solid #e8eae4;border-radius:9px;padding:9px 13px;font-size:13px;opacity:0;transition:opacity .1s;box-shadow:0 6px 20px rgba(0,0,0,.10);max-width:210px;font-family:"Inter",system-ui}
+.tip .tn{font-weight:600;margin-bottom:3px;font-size:13px}
+.tip .tc{font-size:12px;color:#2d6a4f}
+.tip .tc.range{color:#6b7280;font-style:italic}
+.tip .tc.none{color:#d1d5db}
+
+/* ── modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:18px;width:100%;max-width:660px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 28px 80px rgba(0,0,0,.18)}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid #f3f4f6;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.modal-close{background:none;border:none;cursor:pointer;color:#9ca3af;font-size:22px;line-height:1;padding:2px 5px;border-radius:6px;transition:color .1s,background .1s}
+.modal-close:hover{color:#111;background:#f3f4f6}
+.modal-body{padding:24px;overflow-y:auto;flex:1}
+.modal-footer{padding:14px 24px;border-top:1px solid #f3f4f6;font-size:11.5px;color:#9ca3af;flex-shrink:0;line-height:1.5}
+.m-sp-em{font-size:34px;line-height:1;margin-bottom:6px}
+.m-sp-name{font-size:24px;font-weight:700;letter-spacing:-.02em;color:#111}
+.m-sp-sci{font-size:13.5px;color:#9ca3af;font-style:italic;margin-top:2px}
+.m-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;color:#fff;margin-top:8px;display:inline-block}
+.m-badge.CR{background:#dc2626}.m-badge.EN{background:#d97706}.m-badge.VU{background:#b45309}
+.m-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+.m-stat{background:#f7f8f5;border-radius:10px;padding:16px}
+.m-stat-n{font-size:32px;font-weight:700;color:#2d6a4f;letter-spacing:-.03em;line-height:1}
+.m-stat-n.word{font-size:20px}
+.m-stat-l{font-size:12px;color:#9ca3af;margin-top:4px}
+.m-blurb{font-size:14px;color:#374151;line-height:1.65;margin-bottom:18px}
+.m-spark-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:8px}
+.state-table{border:1px solid #e8eae4;border-radius:10px;overflow:hidden;margin-bottom:16px}
+.state-table-head{display:grid;grid-template-columns:1fr auto;padding:9px 14px;background:#f7f8f5;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8eae4}
+.state-row{display:grid;grid-template-columns:1fr auto;padding:10px 14px;border-bottom:1px solid #f3f4f6;align-items:center}
+.state-row:last-child{border-bottom:none}
+.sn{font-size:13px;font-weight:500}
+.sv{font-size:13px;font-weight:700;color:#2d6a4f}
+.range{font-size:12px;color:#9ca3af;font-style:italic}
+.bar-wrap{width:80px;height:4px;background:#f3f4f6;border-radius:3px;margin-top:4px}
+.bar{height:4px;background:#d1fae5;border-radius:3px}
+.pill{font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;color:#fff;margin-left:5px}
+.pill.CR{background:#dc2626}.pill.EN{background:#d97706}.pill.VU{background:#b45309}
+.pill.LC{background:#2d6a4f}.pill.NT{background:#65a30d}.pill.DD,.pill.NA{background:#9ca3af}
+
+/* state modal */
+.state-sp-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.state-sp-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid #e8eae4;border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s}
+.state-sp-row:hover{border-color:#2d6a4f;background:#f9fdfb}
+.state-sp-row .sp-em{font-size:20px;width:24px;text-align:center}
+.state-sp-row .sp-meta{flex:1;min-width:0}
+.state-sp-row .sp-nm{font-size:14px;font-weight:500}
+.state-sp-row .sp-sci{font-size:11.5px;color:#9ca3af;font-style:italic}
+.state-sp-row .sp-cnt{font-size:17px;font-weight:700;color:#2d6a4f;text-align:right}
+.state-sp-row .sp-cnt small{display:block;font-size:10px;font-weight:400;color:#9ca3af}
+.state-sp-row .sp-rng{font-size:12px;color:#9ca3af;font-style:italic}
+.gbif-trigger{width:100%;padding:12px;border:1.5px dashed #e8eae4;border-radius:10px;background:#fff;color:#6b7280;font-size:13px;font-weight:500;cursor:pointer;font-family:"Inter",system-ui;transition:border-color .15s,color .15s}
+.gbif-trigger:hover{border-color:#2d6a4f;color:#2d6a4f}
+.gbif-note{font-size:12px;color:#9ca3af;margin:10px 0 6px;line-height:1.5}
+.gbif-note b{color:#6b7280}.gbif-note .live{color:#2d6a4f;font-weight:600}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #e8eae4;border-top-color:#2d6a4f;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.gbif-list{border:1.5px solid #e8eae4;border-radius:10px;overflow:hidden;margin-top:8px;max-height:300px;overflow-y:auto}
+.gbif-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f3f4f6}
+.gbif-row:last-child{border-bottom:none}
+.gbif-row .gn{flex:1;min-width:0}
+.gbif-row .gt{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gbif-row .gs{font-size:11px;color:#9ca3af;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gbif-row .gc{font-size:11px;color:#9ca3af;white-space:nowrap}
+
+/* ── footer ── */
+.footer-wrap{background:#f0f1ec;border-top:1px solid #e8eae4;margin-top:0;padding:48px 0 0}
+.footer-inner{max-width:1280px;margin:0 auto;padding:0 32px}
+.footer-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:40px;padding-bottom:40px;border-bottom:1px solid #e2e4dc}
+@media(max-width:860px){.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.footer-grid{grid-template-columns:1fr}}
+.footer-logo{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.footer-logo-name{font-size:16px;font-weight:700;letter-spacing:-.01em;color:#111}
+.footer-logo-name span{color:#2d6a4f}
+.footer-tagline{font-size:13px;color:#6b7280;line-height:1.6;max-width:24ch;margin-bottom:16px}
+.footer-credit-name{font-size:13px;color:#374151;margin-bottom:3px}
+.footer-credit-name a{color:#2d6a4f;font-weight:600;text-decoration:none}
+.footer-credit-name a:hover{text-decoration:underline}
+.footer-collab{font-size:12px;color:#9ca3af}
+.footer-collab a{color:#6b7280;text-decoration:none}
+.footer-collab a:hover{color:#2d6a4f}
+.footer-col-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:12px}
+.footer-links{display:flex;flex-direction:column;gap:7px}
+.footer-link{font-size:13px;color:#6b7280;text-decoration:none;transition:color .12s}
+.footer-link:hover{color:#2d6a4f}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding:16px 0;flex-wrap:wrap;gap:10px}
+.footer-copy{font-size:12px;color:#9ca3af}
+.footer-badges{display:flex;gap:8px}
+.footer-badge{font-size:11px;color:#9ca3af;border:1px solid #e2e4dc;padding:3px 9px;border-radius:4px;text-decoration:none;background:#fff}
+.footer-badge:hover{color:#2d6a4f;border-color:#2d6a4f}
+
+/* ── accessibility ── */
+:focus-visible{outline:2px solid #2d6a4f;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <span class="logo-icon">🌿</span>
+      <span class="logo-name">Wild India <span>Atlas</span></span>
+      <span class="logo-badge">LIVE</span>
+    </a>
+    <nav class="header-nav">
+      <a class="nav-pill active" href="index.html">Species</a>
+      <a class="nav-pill" href="map.html">Map</a>
+      <a class="nav-pill" href="about.html">About</a>
+      <a class="nav-pill" href="contact.html">Contact</a>
+    </nav>
+    <a class="nav-cta" target="_blank" rel="noopener">Live Data Access</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-tag">🌿 India Wildlife Field Guide · 2025</div>
+      <h1 class="hero-h1">India's rarest wildlife,<br><span class="green">mapped by state.</span></h1>
+      <p class="hero-desc">Select a species to colour the map by population. Click any state to explore every animal ever recorded there — powered by live GBIF data.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="document.getElementById('species-section').scrollIntoView({behavior:'smooth'})">
+          Browse species ↓
+        </button>
+        <a class="btn-ghost" href="map.html">Open full map →</a>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat featured" data-emoji="🐅">
+        <div class="hstat-n">3,682</div>
+        <div class="hstat-l">Wild tigers in India</div>
+        <span class="hstat-tag amber">2022 census</span>
+      </div>
+      <div class="hstat" data-emoji="🦁">
+        <div class="hstat-n">891</div>
+        <div class="hstat-l">Asiatic lions on Earth</div>
+        <span class="hstat-tag green">2025 estimate</span>
+      </div>
+      <div class="hstat" data-emoji="📍">
+        <div class="hstat-n">23</div>
+        <div class="hstat-l">Curated species</div>
+        <span class="hstat-tag green">Fact-checked</span>
+      </div>
+      <div class="hstat" data-emoji="🔬">
+        <div class="hstat-n">1B+</div>
+        <div class="hstat-l">GBIF records queried</div>
+        <span class="hstat-tag violet">Live per state</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPECIES SECTION -->
+<div class="wrap">
+  <div id="species-section">
+    <div class="sec-label">Mammals</div>
+    <div class="sp-grid" id="sg-mammal"></div>
+    <div class="sec-label" style="margin-top:28px">Birds</div>
+    <div class="sp-grid" id="sg-bird"></div>
+    <div class="sec-label" style="margin-top:28px">Reptiles &amp; Amphibians</div>
+    <div class="sp-grid" id="sg-reptile"></div>
+  </div>
+
+  <!-- ATLAS -->
+  <div class="sec-label" style="margin-top:48px" id="atlas-section">Interactive atlas</div>
+  <div class="atlas-layout">
+
+    <!-- map -->
+    <div class="map-card">
+      <div class="map-head">
+        <span class="map-head-title" id="mapTitle">Select a species above</span>
+        <span class="map-head-peak" id="mapPeak"></span>
+      </div>
+      <svg class="map" id="map" viewBox="0 0 560 620" role="img" aria-label="India map coloured by species population"></svg>
+      <div class="map-foot">
+        <div class="legend-ramp"><span>fewer</span><span class="rampbar"></span><span>more</span></div>
+        <div class="legend-dot" id="legRange" style="display:none"><i style="background:#6ee7b7"></i>range state</div>
+        <div class="legend-dot"><i style="background:#f3f4f6;border:1px solid #e8eae4"></i>not recorded</div>
+      </div>
+    </div>
+
+    <!-- right panel -->
+    <div class="dossier-panel">
+      <div id="infoCard">
+        <div class="empty-state">
+          <div class="empty-icon">🗺️</div>
+          <div class="empty-text">Select a species card above to see population data, trend and state breakdown here.</div>
+        </div>
+      </div>
+      <div id="spotCard" style="display:none">
+        <div class="snap-card">
+          <div class="snap-title">
+            Conservation snapshot
+            <button class="snap-more" id="spotMore">Full dossier →</button>
+          </div>
+          <div id="spotBody"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /atlas-layout -->
+</div><!-- /wrap -->
+
+<div class="footer-wrap">
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <span class="footer-logo-icon">🌿</span>
+          <span class="footer-logo-name">Wild India <span>Atlas</span></span>
+        </div>
+        <p class="footer-tagline">An interactive field guide to India's 23 most threatened species, with live biodiversity data per state.</p>
+        <div class="footer-credit-name">Made by <a href="https://banajitrajbongshi.netlify.app/" target="_blank" rel="noopener">Banajit Rajbongshi</a></div>
+        <div class="footer-collab">in collaboration with <a href="https://www.instagram.com/the_vinci_terminal" target="_blank" rel="noopener">@the_vinci_terminal</a></div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Species</div>
+        <div class="footer-links">
+          <a class="footer-link" href="#">Bengal Tiger 🐅</a>
+          <a class="footer-link" href="#">Asiatic Lion 🦁</a>
+          <a class="footer-link" href="#">One-horned Rhino 🦏</a>
+          <a class="footer-link" href="#">Snow Leopard 🐱</a>
+          <a class="footer-link" href="#">Ganges Dolphin 🐬</a>
+          <a class="footer-link" href="#">All 23 species →</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Data sources</div>
+        <div class="footer-links">
+          <a class="footer-link" href="https://ntca.gov.in" target="_blank" rel="noopener">NTCA · Tiger census</a>
+          <a class="footer-link" href="https://www.iucnredlist.org" target="_blank" rel="noopener">IUCN Red List</a>
+          <a class="footer-link" href="https://www.gbif.org" target="_blank" rel="noopener">GBIF Open Data</a>
+          <a class="footer-link" href="#">Gujarat Forest Dept</a>
+          <a class="footer-link" href="#">SAIEE Elephant Census</a>
+          <a class="footer-link" href="#">WII · SPAI</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Project</div>
+        <div class="footer-links">
+          <a class="footer-link" href="https://wildindiaatlas.netlify.app/" target="_blank" rel="noopener">Live site ↗</a>
+          <a class="footer-link" href="https://banajitrajbongshi.netlify.app/" target="_blank" rel="noopener">About the author</a>
+          <a class="footer-link" href="https://www.instagram.com/the_vinci_terminal" target="_blank" rel="noopener">@the_vinci_terminal</a>
+          <a class="footer-link" href="#">Methodology &amp; sources</a>
+          <a class="footer-link" href="#">Sitemap</a>
+        </div>
+      </div>
+
+    </div><!-- /footer-grid -->
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2025 Banajit Rajbongshi · Wild India Atlas · All population data from public government sources</div>
+      <div class="footer-badges">
+        <a class="footer-badge" href="https://ntca.gov.in" target="_blank" rel="noopener">NTCA</a>
+        <a class="footer-badge" href="https://www.iucnredlist.org" target="_blank" rel="noopener">IUCN</a>
+        <a class="footer-badge" href="https://www.gbif.org" target="_blank" rel="noopener">GBIF</a>
+        <a class="footer-badge" href="https://wildindiaatlas.netlify.app/sitemap.xml" target="_blank" rel="noopener">Sitemap</a>
+      </div>
+    </div>
+
+  </div><!-- /footer-inner -->
+</div><!-- /footer-wrap --
+
+<!-- MODALS -->
+<!-- ── MODALS ── -->
+<!-- Species modal -->
+<div class="modal-overlay" id="spModal" role="dialog" aria-modal="true" aria-labelledby="spModalTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div id="spModalTitle"></div>
+      <button class="modal-close" id="spClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="spModalBody"></div>
+    <div class="modal-footer" id="spModalFooter"></div>
+  </div>
+</div>
+
+<!-- State modal -->
+<div class="modal-overlay" id="stModal" role="dialog" aria-modal="true" aria-labelledby="stModalTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div id="stModalTitle"></div>
+      <button class="modal-close" id="stClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="stModalBody"></div>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const SPECIES={"tiger":{"name":"Bengal Tiger","sci":"Panthera tigris tigris","status":"EN","emoji":"\ud83d\udc05","cat":"Mammal","pop":"3,682","unit":"in the wild","year":2022,"source":"All India Tiger Estimation 2022 \u2014 NTCA & WII","blurb":"'Bengal' is a subspecies name, not a location — these tigers range across 17 Indian states from Madhya Pradesh and Karnataka to Kerala, Assam and the Sundarbans of West Bengal. India holds ~75% of the world’s wild tigers. From 1,411 in 2006 to 3,682 today — one of conservation’s great recoveries.","trend":[[2006,1411],[2010,1706],[2014,2226],[2018,2967],[2022,3682]],"states":{"Madhya Pradesh":785,"Karnataka":563,"Uttarakhand":560,"Maharashtra":444,"Tamil Nadu":264,"Assam":204,"Kerala":190,"Uttar Pradesh":135,"West Bengal":100,"Rajasthan":97,"Arunachal Pradesh":null,"Chhattisgarh":null,"Jharkhand":null,"Odisha":null,"Telangana":null,"Bihar":null,"Andhra Pradesh":null}},"lion":{"name":"Asiatic Lion","sci":"Panthera leo persica","status":"EN","emoji":"\ud83e\udd81","cat":"Mammal","pop":"891","unit":"on Earth","year":2025,"source":"16th Asiatic Lion Estimation 2025 \u2014 Gujarat Forest Dept.","blurb":"The world's last wild Asiatic lions live in one place: Gujarat's Gir landscape. Up 32% in five years.","trend":[[2001,327],[2005,359],[2010,411],[2015,523],[2020,674],[2025,891]],"states":{"Gujarat":891}},"rhino":{"name":"One-horned Rhino","sci":"Rhinoceros unicornis","status":"VU","emoji":"\ud83e\udd8f","cat":"Mammal","pop":"3,262","unit":"in India","year":2022,"source":"Rhino estimation 2022 \u2014 State Forest Departments","blurb":"Reduced to ~100 a century ago, now past 3,200 \u2014 roughly 70% in Assam's Kaziranga alone.","states":{"Assam":2895,"West Bengal":347,"Uttar Pradesh":40}},"elephant":{"name":"Asian Elephant","sci":"Elephas maximus","status":"EN","emoji":"\ud83d\udc18","cat":"Mammal","pop":"22,446","unit":"in India","year":2025,"source":"Status of Elephants in India \u2014 SAIEE DNA Census 2025","blurb":"India's first DNA-based elephant census. The southern and northeastern forests hold the largest herds.","states":{"Karnataka":6013,"Assam":4159,"Tamil Nadu":3136,"Uttarakhand":1792}},"leopard":{"name":"Indian Leopard","sci":"Panthera pardus fusca","status":"VU","emoji":"\ud83d\udc06","cat":"Mammal","pop":"13,874","unit":"in tiger-range states","year":2022,"source":"Status of Leopards in India, 5th Cycle \u2014 NTCA & WII","blurb":"India's most adaptable big cat, ranging from forests to city edges. Central India is the stronghold.","states":{"Madhya Pradesh":3907,"Maharashtra":1985,"Karnataka":1879,"Tamil Nadu":1070}},"snowleopard":{"name":"Snow Leopard","sci":"Panthera uncia","status":"VU","emoji":"\ud83d\udc31","cat":"Mammal","pop":"~718","unit":"across the Himalaya","year":2023,"source":"Snow Leopard Population Assessment in India (SPAI)","blurb":"The 'ghost of the mountains' of the high Himalaya. First national assessment put the population near 718.","states":{"Ladakh":null,"Jammu and Kashmir":null,"Himachal Pradesh":null,"Uttarakhand":null,"Sikkim":null,"Arunachal Pradesh":null}},"dolphin":{"name":"Ganges River Dolphin","sci":"Platanista gangetica","status":"EN","emoji":"\ud83d\udc2c","cat":"Mammal","pop":"~6,327","unit":"Ganga\u2013Brahmaputra rivers","year":2024,"source":"First Ganges Dolphin Estimation 2024 \u2014 WII / Project Dolphin","blurb":"India's National Aquatic Animal, found in 28 rivers across 8 states. Navigates by echolocation despite being functionally blind. Threatened by bycatch, dams (Farakka Barrage isolates populations) and river pollution.","states":{"Uttar Pradesh":2397,"Bihar":2220,"West Bengal":815,"Assam":635,"Jharkhand":162,"Madhya Pradesh":null,"Rajasthan":null,"Punjab":3}},"nilgiritahr":{"name":"Nilgiri Tahr","sci":"Nilgiritragus hylocrius","status":"EN","emoji":"\ud83d\udc10","cat":"Mammal","pop":"~2,728","unit":"in the Western Ghats","year":2024,"source":"Synchronised Nilgiri Tahr Survey 2024 \u2014 Tamil Nadu Forest Dept.","blurb":"A cliff-dwelling mountain ungulate found only in the Western Ghats; Tamil Nadu's state animal.","states":{"Tamil Nadu":1303,"Kerala":1365}},"hangul":{"name":"Hangul (Kashmir Stag)","sci":"Cervus hanglu hanglu","status":"CR","emoji":"\ud83e\udd8c","cat":"Mammal","pop":"~289","unit":"in Dachigam, Kashmir","year":2023,"source":"WII Structured Survey 2021 · Earlier J&K Forest Dept. estimates ranged 130–200","blurb":"India's only red deer, now clinging to a single valley \u2014 one of the country's most threatened large mammals.","states":{"Jammu and Kashmir":null}},"pygmyhog":{"name":"Pygmy Hog","sci":"Porcula salvania","status":"EN","emoji":"\ud83d\udc17","cat":"Mammal","pop":"~250","unit":"in Assam's grasslands","year":2023,"source":"Pygmy Hog Conservation Programme · IUCN SSC Pigs, Peccaries & Hippos Specialist Group","blurb":"The world's smallest wild pig and an indicator of healthy terai grassland; brought back through captive breeding.","states":{"Assam":null}},"sangai":{"name":"Sangai (Brow-antlered Deer)","sci":"Rucervus eldii eldii","status":"EN","emoji":"\ud83e\udd8c","cat":"Mammal","pop":"<260","unit":"at Loktak Lake, Manipur","year":2023,"source":"Manipur Forest Dept. / Keibul Lamjao NP","blurb":"The 'dancing deer' that walks on floating reed mats of Loktak Lake \u2014 found nowhere else on Earth.","states":{"Manipur":null}},"redpanda":{"name":"Red Panda","sci":"Ailurus fulgens","status":"EN","emoji":"\ud83d\udc3c","cat":"Mammal","pop":"Endangered","unit":"Eastern Himalaya","source":"IUCN Red List \u00b7 WWF-India","blurb":"A shy bamboo-eater of misty Himalayan forests; Sikkim's state animal, threatened by habitat loss.","states":{"Sikkim":null,"Arunachal Pradesh":null,"West Bengal":null,"Meghalaya":null}},"ltmacaque":{"name":"Lion-tailed Macaque","sci":"Macaca silenus","status":"EN","emoji":"\ud83d\udc12","cat":"Mammal","pop":"Endangered","unit":"Western Ghats endemic","source":"IUCN Red List","blurb":"A rainforest primate with a silver mane, among the rarest macaques, restricted to Western Ghats canopy.","states":{"Karnataka":null,"Kerala":null,"Tamil Nadu":null}},"dhole":{"name":"Dhole (Wild Dog)","sci":"Cuon alpinus","status":"EN","emoji":"\ud83d\udc15","cat":"Mammal","pop":"Endangered","unit":"forests of S, C & NE India","source":"IUCN Red List","blurb":"India's whistling pack-hunter, an apex social carnivore that has vanished from much of its old range.","states":{"Karnataka":null,"Kerala":null,"Tamil Nadu":null,"Maharashtra":null,"Madhya Pradesh":null,"Chhattisgarh":null,"Arunachal Pradesh":null,"Assam":null}},"dugong":{"name":"Dugong (Sea Cow)","sci":"Dugong dugon","status":"VU","emoji":"\ud83d\udc0b","cat":"Mammal","pop":"<250","unit":"in Indian waters","year":2023,"source":"Wildlife Institute of India","blurb":"A gentle seagrass-grazing marine mammal surviving in three pockets of Indian coast.","states":{"Tamil Nadu":null,"Gujarat":null,"Andaman and Nicobar Islands":null}},"bustard":{"name":"Great Indian Bustard","sci":"Ardeotis nigriceps","status":"CR","emoji":"\ud83e\udda4","cat":"Bird","pop":"~128 wild","unit":"left in the wild","year":2025,"source":"WII estimate 2018 (max 150); wild count ~128 per expert consensus 2024-25 (BNHS/WII). No formal census since 2018.","blurb":"One of the heaviest flying birds, on the brink. ~120 survivors hold on in Rajasthan's Thar; power lines are the worst threat.","states":{"Rajasthan":null,"Gujarat":null,"Maharashtra":null,"Karnataka":null,"Andhra Pradesh":null}},"saruscrane":{"name":"Sarus Crane","sci":"Antigone antigone","status":"VU","emoji":"\ud83e\udda9","cat":"Bird","pop":"Vulnerable","unit":"world's tallest flying bird","source":"IUCN Red List \u00b7 BNHS","blurb":"A wetland crane that mates for life, a cultural icon of the northern plains and their paddy landscapes.","states":{"Uttar Pradesh":null,"Madhya Pradesh":null,"Rajasthan":null,"Gujarat":null}},"florican":{"name":"Bengal Florican","sci":"Houbaropsis bengalensis","status":"CR","emoji":"\ud83d\udc26","cat":"Bird","pop":"Critically Endangered","unit":"terai & Brahmaputra grasslands","source":"IUCN Red List \u00b7 BNHS","blurb":"A grassland bustard famous for the male's leaping courtship display; fewer than a thousand survive worldwide.","states":{"Assam":null,"Uttar Pradesh":null}},"vulture":{"name":"White-rumped Vulture","sci":"Gyps bengalensis","status":"CR","emoji":"\ud83e\udd85","cat":"Bird","pop":"Critically Endangered","unit":"crashed ~99% since the 1990s","source":"IUCN Red List \u00b7 SAVE","blurb":"Once among the most abundant large raptors on Earth, wiped out by the cattle drug diclofenac in a few years.","states":{"Madhya Pradesh":null,"Maharashtra":null,"Rajasthan":null,"Gujarat":null,"Uttar Pradesh":null,"Assam":null,"Haryana":null}},"gharial":{"name":"Gharial","sci":"Gavialis gangeticus","status":"CR","emoji":"\ud83d\udc0a","cat":"Reptile & Amphibian","pop":"~650","unit":"breeding adults","year":2023,"source":"Gharial Ecology Project \u00b7 WII","blurb":"A fish-eating, narrow-snouted crocodilian whose last real stronghold is the Chambal river.","states":{"Madhya Pradesh":null,"Rajasthan":null,"Uttar Pradesh":null,"Bihar":null}},"oliveridley":{"name":"Olive Ridley Turtle","sci":"Lepidochelys olivacea","status":"VU","emoji":"\ud83d\udc22","cat":"Reptile & Amphibian","pop":"Vulnerable","unit":"Odisha mass-nesting beaches","source":"IUCN Red List \u00b7 Odisha Forest Dept.","blurb":"Each year hundreds of thousands swarm Odisha's coast in synchronised 'arribada' nesting events.","states":{"Odisha":null,"Andhra Pradesh":null,"Tamil Nadu":null,"West Bengal":null}},"kingcobra":{"name":"King Cobra","sci":"Ophiophagus hannah","status":"VU","emoji":"\ud83d\udc0d","cat":"Reptile & Amphibian","pop":"Vulnerable","unit":"world's longest venomous snake","source":"IUCN Red List","blurb":"The only snake that builds a nest for its eggs; a forest sentinel of the Western Ghats and Northeast.","states":{"Kerala":null,"Karnataka":null,"Tamil Nadu":null,"Arunachal Pradesh":null,"Assam":null,"West Bengal":null}},"purplefrog":{"name":"Purple Frog","sci":"Nasikabatrachus sahyadrensis","status":"EN","emoji":"\ud83d\udc38","cat":"Reptile & Amphibian","pop":"Endangered","unit":"Western Ghats endemic","source":"IUCN Red List","blurb":"A bloated, burrowing 'living fossil' that surfaces only a few days a year to breed in monsoon streams.","states":{"Kerala":null,"Tamil Nadu":null}}};
+const ORDER=["tiger", "lion", "rhino", "elephant", "leopard", "snowleopard", "dolphin", "nilgiritahr", "hangul", "pygmyhog", "sangai", "redpanda", "ltmacaque", "dhole", "dugong", "bustard", "saruscrane", "florican", "vulture", "gharial", "oliveridley", "kingcobra", "purplefrog"];
+const CATS=["Mammal", "Bird", "Reptile & Amphibian"];
+const STATE_BBOX={"Mizoram":[92.265,22.063,93.396,24.513],"Tamil Nadu":[76.234,8.094,80.3,13.565],"Madhya Pradesh":[74.058,21.076,82.813,26.832],"Maharashtra":[72.654,15.651,80.852,22.03],"Chhattisgarh":[80.271,17.797,84.293,24.102],"Gujarat":[68.31,20.121,74.465,24.712],"Odisha":[81.397,17.818,87.485,22.557],"Andhra Pradesh":[76.76,12.627,84.764,19.119],"Karnataka":[74.086,11.595,78.586,18.423],"Goa":[73.685,14.901,74.297,15.728],"Kerala":[74.869,8.292,77.403,12.759],"Telangana":[77.288,15.841,81.31,19.912],"West Bengal":[85.859,21.615,89.852,27.22],"Dadra and Nagar Haveli and Daman and Diu":[70.92,20.121,73.211,20.742],"Puducherry":[75.537,10.827,82.27,16.737],"Lakshadweep":[73.018,8.263,73.054,8.276],"Arunachal Pradesh":[91.881,26.682,97.371,29.459],"Assam":[89.729,24.178,95.97,27.96],"Nagaland":[93.329,25.306,95.234,27.034],"Meghalaya":[89.872,25.03,92.792,26.076],"Manipur":[92.976,23.848,94.675,25.605],"Tripura":[91.161,22.999,92.295,24.509],"Andaman and Nicobar Islands":[92.551,6.766,93.915,13.391],"Uttar Pradesh":[77.132,23.922,84.6,30.401],"Rajasthan":[69.51,23.06,78.222,30.194],"Delhi":[76.884,28.405,77.348,28.853],"Haryana":[74.526,27.654,77.58,30.904],"Sikkim":[88.038,27.071,88.844,28.098],"Bihar":[83.35,24.288,88.28,27.517],"Jharkhand":[83.33,22.01,87.891,25.331],"Ladakh":[72.534,32.384,80.29,37.077],"Jammu and Kashmir":[73.39,32.308,76.773,35.11],"Himachal Pradesh":[75.598,30.379,78.881,33.251],"Punjab":[73.879,29.56,76.912,32.511],"Uttarakhand":[77.575,28.837,80.929,31.456],"Chandigarh":[76.71,30.682,76.838,30.761]};
+const INDIA={"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[93.123,23.006],[93.196,23.056],[93.358,23.331],[93.39,23.497],[93.396,23.926],[93.253,24.021],[93.207,24.047],[92.976,24.116],[93.009,24.413],[92.896,24.391],[92.762,24.513],[92.532,24.178],[92.422,24.25],[92.295,24.245],[92.265,23.727],[92.402,23.266],[92.372,22.936],[92.509,22.741],[92.606,22.124],[92.855,22.063],[93.161,22.18],[93.097,22.786],[93.123,23.006]]]},"properties":{"st_nm":"Mizoram"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[80.008,12.254],[80.138,12.411],[80.25,12.858],[80.3,13.142],[80.268,13.565],[80.037,13.538],[79.946,13.364],[79.534,13.276],[79.284,13.123],[79.228,13.158],[78.621,12.991],[78.603,12.844],[78.412,12.627],[78.231,12.76],[77.866,12.87],[77.831,12.866],[77.601,12.668],[77.615,12.367],[77.471,12.243],[77.747,12.155],[77.676,11.952],[77.293,11.809],[76.909,11.795],[76.848,11.595],[76.418,11.671],[76.234,11.527],[76.548,11.359],[76.442,11.201],[76.707,11.24],[76.656,10.939],[76.907,10.782],[76.834,10.339],[76.892,10.26],[76.898,10.254],[76.899,10.253],[77.051,10.262],[77.091,10.315],[77.288,10.232],[77.268,10.122],[77.167,9.612],[77.403,9.526],[77.34,9.42],[77.282,9.299],[77.204,9.07],[77.256,8.879],[77.199,8.771],[77.27,8.578],[77.098,8.292],[77.445,8.094],[77.589,8.14],[77.97,8.335],[78.143,8.501],[78.172,8.883],[78.384,9.094],[79.065,9.299],[78.9,9.469],[79.117,9.85],[79.12,9.853],[79.121,9.88],[79.124,9.883],[79.227,10.137],[79.472,10.316],[79.872,10.36],[79.849,10.827],[79.724,10.929],[79.748,10.996],[79.851,10.985],[79.813,11.424],[79.796,11.786],[79.806,11.834],[79.808,11.845],[79.686,11.88],[79.84,11.956],[79.857,12.007],[79.857,12.05],[80.008,12.254]]]},"properties":{"st_nm":"Tamil Nadu"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[75.609,21.39],[75.987,21.369],[76.383,21.076],[76.662,21.281],[76.782,21.559],[76.999,21.692],[77.007,21.678],[77.023,21.688],[77.04,21.698],[77.062,21.713],[77.479,21.77],[77.575,21.527],[78.03,21.421],[78.343,21.589],[78.433,21.497],[78.9,21.501],[79.235,21.718],[79.51,21.596],[79.539,21.541],[79.918,21.524],[80.268,21.618],[80.661,21.333],[80.846,21.835],[81.045,22.241],[81.193,22.491],[81.475,22.489],[81.729,22.67],[81.732,22.676],[82.123,23.104],[81.986,23.415],[81.603,23.885],[82.209,23.853],[82.498,23.784],[82.694,23.919],[82.813,23.962],[82.744,24.165],[82.798,24.576],[82.524,24.677],[82.298,24.607],[82.094,24.817],[81.541,25.188],[81.12,24.904],[80.715,25.066],[80.478,24.976],[80.264,25.024],[80.291,25.059],[80.352,25.123],[80.105,25.35],[79.673,25.121],[79.28,25.324],[79.264,25.273],[79.279,25.243],[79.293,25.184],[79.305,25.18],[79.323,25.15],[78.88,25.158],[78.559,25.213],[78.64,25.071],[78.985,24.442],[78.991,24.417],[78.806,24.179],[78.268,24.45],[78.19,24.842],[78.335,25.068],[78.337,25.085],[78.374,25.099],[78.447,25.122],[78.39,25.206],[78.34,25.416],[78.34,25.433],[78.355,25.452],[78.395,25.444],[78.416,25.477],[78.42,25.532],[78.452,25.572],[78.658,25.559],[78.886,25.913],[78.938,25.952],[79.135,26.44],[78.78,26.769],[78.545,26.764],[78.222,26.832],[77.375,26.365],[77.12,26.214],[76.852,26.032],[76.546,25.838],[76.594,25.408],[77.083,25.337],[77.367,25.411],[77.312,25.081],[76.877,25.041],[77.069,24.557],[76.844,24.436],[76.881,24.131],[76.213,24.209],[75.69,23.747],[75.462,23.918],[75.837,24.057],[75.728,24.396],[75.921,24.543],[75.785,24.762],[75.549,24.703],[75.184,24.748],[75.352,25.019],[75.191,25.037],[74.993,24.693],[74.697,24.483],[74.908,24.212],[74.941,23.765],[74.772,23.543],[74.734,23.221],[74.32,23.06],[74.465,22.817],[74.379,22.635],[74.058,22.55],[74.19,22.32],[74.147,21.951],[74.433,22.03],[74.505,21.726],[74.775,21.615],[75.211,21.412],[75.609,21.39]]]},"properties":{"st_nm":"Madhya Pradesh"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[79.806,19.579],[79.978,19.399],[79.929,19.158],[79.914,18.826],[80.276,18.72],[80.271,18.943],[80.482,19.337],[80.852,19.365],[80.672,19.703],[80.469,19.827],[80.545,20.1],[80.626,20.332],[80.562,20.823],[80.464,21.175],[80.661,21.333],[80.268,21.618],[79.918,21.524],[79.539,21.541],[79.51,21.596],[79.235,21.718],[78.9,21.501],[78.433,21.497],[78.343,21.589],[78.03,21.421],[77.575,21.527],[77.479,21.77],[77.062,21.713],[77.04,21.698],[77.023,21.688],[77.007,21.678],[76.999,21.692],[76.782,21.559],[76.662,21.281],[76.383,21.076],[75.987,21.369],[75.609,21.39],[75.211,21.412],[74.775,21.615],[74.505,21.726],[74.433,22.03],[74.147,21.951],[73.939,21.874],[73.835,21.52],[73.982,21.522],[73.982,21.523],[74.046,21.446],[73.942,21.3],[73.737,21.079],[73.801,21.029],[73.807,21.009],[73.849,20.999],[73.849,20.998],[73.889,20.933],[73.942,20.84],[73.745,20.565],[73.474,20.72],[73.407,20.624],[73.416,20.205],[73.249,20.122],[73.211,20.121],[72.962,20.209],[72.775,20.132],[72.654,19.836],[72.798,19.304],[72.784,19.264],[72.84,19.048],[72.836,18.864],[73.044,17.982],[73.289,17.116],[73.347,16.53],[73.511,15.937],[73.685,15.728],[74.118,15.651],[74.21,15.781],[74.346,15.764],[74.48,16.249],[74.315,16.555],[74.696,16.715],[75.089,16.952],[75.341,16.956],[75.665,16.979],[75.604,17.305],[75.633,17.477],[76.075,17.337],[76.383,17.315],[76.429,17.643],[76.685,17.682],[76.74,17.899],[76.919,17.916],[77.265,18.423],[77.551,18.292],[77.739,18.556],[77.949,18.844],[77.797,19.073],[77.863,19.304],[78.193,19.317],[78.309,19.481],[78.306,19.912],[78.842,19.762],[78.936,19.55],[79.253,19.593],[79.472,19.501],[79.806,19.579]]]},"properties":{"st_nm":"Maharashtra"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[82.018,20.049],[82.446,19.91],[82.594,19.776],[82.718,19.989],[82.398,20.056],[82.438,20.434],[82.339,20.874],[82.639,21.089],[83.192,21.139],[83.269,21.377],[83.272,21.377],[83.275,21.377],[83.487,21.644],[83.591,21.825],[83.538,22.045],[83.802,22.294],[84.012,22.528],[84.293,22.773],[84.038,23.171],[84.074,23.334],[84.016,23.635],[83.33,24.102],[83.207,23.922],[82.813,23.962],[82.694,23.919],[82.498,23.784],[82.209,23.853],[81.603,23.885],[81.986,23.415],[82.123,23.104],[81.732,22.676],[81.729,22.67],[81.475,22.489],[81.193,22.491],[81.045,22.241],[80.846,21.835],[80.661,21.333],[80.464,21.175],[80.562,20.823],[80.626,20.332],[80.545,20.1],[80.469,19.827],[80.672,19.703],[80.852,19.365],[80.482,19.337],[80.271,18.943],[80.276,18.72],[80.372,18.611],[80.706,18.439],[80.756,18.17],[80.979,18.166],[81.085,17.797],[81.397,17.818],[81.53,18.24],[81.9,18.661],[82.091,18.738],[82.206,19.121],[82.189,19.428],[82.028,19.508],[82.065,19.791],[81.875,20.051],[81.875,20.052],[82.018,20.049]]]},"properties":{"st_nm":"Chhattisgarh"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[72.736,21.475],[72.751,21.062],[72.855,20.75],[72.887,20.462],[72.829,20.368],[72.775,20.132],[72.962,20.209],[73.043,20.326],[73.211,20.121],[73.249,20.122],[73.416,20.205],[73.407,20.624],[73.474,20.72],[73.745,20.565],[73.942,20.84],[73.889,20.933],[73.849,20.998],[73.849,20.999],[73.807,21.009],[73.801,21.029],[73.737,21.079],[73.942,21.3],[74.046,21.446],[73.982,21.523],[73.982,21.522],[73.835,21.52],[73.939,21.874],[74.147,21.951],[74.19,22.32],[74.058,22.55],[74.379,22.635],[74.465,22.817],[74.32,23.06],[73.982,23.338],[73.959,23.38],[73.627,23.449],[73.656,23.621],[73.369,23.815],[73.378,23.904],[73.067,24.194],[73.002,24.48],[72.959,24.36],[72.335,24.633],[72.058,24.712],[71.287,24.616],[71.188,24.651],[71.112,24.675],[70.806,24.22],[70.573,24.422],[69.732,24.171],[69.595,24.293],[69.194,24.237],[68.764,24.296],[68.754,23.971],[68.339,23.966],[68.31,23.578],[68.633,23.17],[69.131,22.874],[69.648,22.796],[70.081,22.92],[70.312,23.215],[70.689,23.118],[70.497,22.933],[70.399,22.905],[70.125,22.553],[69.754,22.418],[69.341,22.312],[69.006,22.44],[68.966,22.234],[69.396,21.889],[69.981,21.227],[70.24,20.992],[70.827,20.69],[70.92,20.742],[71,20.742],[71.206,20.796],[71.677,20.996],[72.113,21.199],[72.309,21.625],[72.245,21.995],[72.376,22.315],[72.947,22.293],[72.867,22.214],[72.567,22.181],[72.543,21.733],[72.736,21.475]]]},"properties":{"st_nm":"Gujarat"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[85.683,22.058],[85.397,22.164],[85.238,22.01],[85.029,22.122],[85.07,22.491],[84.429,22.352],[84.012,22.528],[83.802,22.294],[83.538,22.045],[83.591,21.825],[83.487,21.644],[83.275,21.377],[83.272,21.377],[83.269,21.377],[83.192,21.139],[82.639,21.089],[82.339,20.874],[82.438,20.434],[82.398,20.056],[82.718,19.989],[82.594,19.776],[82.446,19.91],[82.018,20.049],[81.875,20.052],[81.875,20.051],[82.065,19.791],[82.028,19.508],[82.189,19.428],[82.206,19.121],[82.091,18.738],[81.9,18.661],[81.53,18.24],[81.397,17.818],[81.617,17.824],[81.979,18.013],[82.319,18.045],[82.428,18.486],[82.773,18.342],[83.077,18.404],[82.999,18.609],[83.412,18.874],[83.348,19.018],[83.663,19.099],[83.756,18.911],[83.793,19.018],[83.891,18.816],[84.319,18.789],[84.423,18.949],[84.701,19.119],[85.172,19.468],[85.679,19.745],[86.37,19.982],[86.777,20.335],[86.806,20.735],[86.977,20.86],[86.859,21.214],[87.148,21.509],[87.485,21.615],[87.442,21.768],[87.243,21.964],[87.101,21.864],[87.029,22.039],[86.728,22.216],[86.067,22.557],[85.963,22.485],[86.009,22.116],[85.683,22.058]]]},"properties":{"st_nm":"Odisha"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[80.268,13.565],[80.131,14.229],[80.196,14.586],[80.04,15.009],[80.123,15.368],[80.418,15.799],[80.68,15.885],[80.831,15.706],[81.008,15.755],[81.213,16.208],[81.553,16.347],[81.715,16.311],[82.314,16.559],[82.319,17.058],[82.542,17.249],[83.162,17.56],[83.519,17.95],[83.663,18.079],[84.128,18.313],[84.764,19.075],[84.701,19.119],[84.423,18.949],[84.319,18.789],[83.891,18.816],[83.793,19.018],[83.756,18.911],[83.663,19.099],[83.348,19.018],[83.412,18.874],[82.999,18.609],[83.077,18.404],[82.773,18.342],[82.428,18.486],[82.319,18.045],[81.979,18.013],[81.617,17.824],[81.397,17.818],[81.085,17.797],[80.911,17.638],[81.31,17.41],[80.941,17.219],[80.877,17.07],[80.505,17.069],[80.57,16.768],[80.056,16.971],[80.073,16.817],[79.949,16.636],[79.68,16.693],[79.258,16.566],[79.21,16.357],[79.215,16.226],[78.923,16.123],[78.256,16.009],[78.248,15.972],[78.083,15.841],[77.514,15.928],[77.248,15.965],[77.026,15.837],[77.063,15.328],[77.156,15.14],[76.76,14.989],[76.765,14.602],[77.005,14.235],[77.364,14.275],[77.322,14.031],[77.003,14.198],[76.948,14.095],[77.042,13.933],[77.433,13.844],[77.456,13.683],[77.97,13.959],[78.126,13.787],[78.196,13.569],[78.586,13.276],[78.467,12.975],[78.231,12.76],[78.412,12.627],[78.603,12.844],[78.621,12.991],[79.228,13.158],[79.284,13.123],[79.534,13.276],[79.946,13.364],[80.037,13.538],[80.268,13.565]],[[82.186,16.737],[82.27,16.722],[82.267,16.695],[82.239,16.717],[82.2,16.721],[82.186,16.737]]]},"properties":{"st_nm":"Andhra Pradesh"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[77.288,16.409],[77.416,16.518],[77.459,16.885],[77.467,16.955],[77.38,17.223],[77.686,17.511],[77.494,17.566],[77.467,17.577],[77.444,17.584],[77.656,17.969],[77.601,18.276],[77.551,18.292],[77.265,18.423],[76.919,17.916],[76.74,17.899],[76.685,17.682],[76.429,17.643],[76.383,17.315],[76.075,17.337],[75.633,17.477],[75.604,17.305],[75.665,16.979],[75.341,16.956],[75.089,16.952],[74.696,16.715],[74.315,16.555],[74.48,16.249],[74.346,15.764],[74.21,15.781],[74.118,15.651],[74.278,15.522],[74.251,15.492],[74.297,15.041],[74.086,14.901],[74.263,14.719],[74.583,13.926],[74.777,13.071],[74.869,12.759],[75.416,12.499],[75.415,12.29],[75.936,11.941],[76.113,11.979],[76.413,11.758],[76.418,11.671],[76.848,11.595],[76.909,11.795],[77.293,11.809],[77.676,11.952],[77.747,12.155],[77.471,12.243],[77.615,12.367],[77.601,12.668],[77.831,12.866],[77.866,12.87],[78.231,12.76],[78.467,12.975],[78.586,13.276],[78.196,13.569],[78.126,13.787],[77.97,13.959],[77.456,13.683],[77.433,13.844],[77.042,13.933],[76.948,14.095],[77.003,14.198],[77.322,14.031],[77.364,14.275],[77.005,14.235],[76.765,14.602],[76.76,14.989],[77.156,15.14],[77.063,15.328],[77.026,15.837],[77.248,15.965],[77.514,15.928],[77.594,16.343],[77.288,16.409]]]},"properties":{"st_nm":"Karnataka"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[73.934,15.433],[74.086,14.901],[74.297,15.041],[74.251,15.492],[74.278,15.522],[74.118,15.651],[73.685,15.728],[73.934,15.433]]]},"properties":{"st_nm":"Goa"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[76.418,11.671],[76.413,11.758],[76.113,11.979],[75.936,11.941],[75.415,12.29],[75.416,12.499],[74.869,12.759],[75.165,12.089],[75.532,11.706],[75.537,11.706],[75.554,11.702],[75.826,11.123],[75.958,10.686],[76.214,10.194],[76.28,9.789],[76.32,9.483],[76.479,9.123],[76.682,8.776],[77.098,8.292],[77.27,8.578],[77.199,8.771],[77.256,8.879],[77.204,9.07],[77.282,9.299],[77.34,9.42],[77.403,9.526],[77.167,9.612],[77.268,10.122],[77.288,10.232],[77.091,10.315],[77.051,10.262],[76.899,10.253],[76.898,10.254],[76.892,10.26],[76.834,10.339],[76.907,10.782],[76.656,10.939],[76.707,11.24],[76.442,11.201],[76.548,11.359],[76.234,11.527],[76.418,11.671]],[[75.555,11.722],[75.537,11.72],[75.542,11.739],[75.555,11.722]]]},"properties":{"st_nm":"Kerala"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[79.806,19.579],[79.472,19.501],[79.253,19.593],[78.936,19.55],[78.842,19.762],[78.306,19.912],[78.309,19.481],[78.193,19.317],[77.863,19.304],[77.797,19.073],[77.949,18.844],[77.739,18.556],[77.551,18.292],[77.601,18.276],[77.656,17.969],[77.444,17.584],[77.467,17.577],[77.494,17.566],[77.686,17.511],[77.38,17.223],[77.467,16.955],[77.459,16.885],[77.416,16.518],[77.288,16.409],[77.594,16.343],[77.514,15.928],[78.083,15.841],[78.248,15.972],[78.256,16.009],[78.923,16.123],[79.215,16.226],[79.21,16.357],[79.258,16.566],[79.68,16.693],[79.949,16.636],[80.073,16.817],[80.056,16.971],[80.57,16.768],[80.505,17.069],[80.877,17.07],[80.941,17.219],[81.31,17.41],[80.911,17.638],[81.085,17.797],[80.979,18.166],[80.756,18.17],[80.706,18.439],[80.372,18.611],[80.276,18.72],[79.914,18.826],[79.929,19.158],[79.978,19.399],[79.806,19.579]]]},"properties":{"st_nm":"Telangana"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[87.998,22.245],[88.082,22.261],[88.183,22.187],[88.208,22.026],[88.145,21.955],[88.267,21.728],[88.445,21.918],[89.069,21.949],[89.055,22.128],[88.858,22.968],[88.709,23.232],[88.763,23.446],[88.593,23.617],[88.7,24.097],[88.742,24.255],[88.133,24.51],[88.027,24.69],[88.394,24.969],[88.436,25.2],[88.91,25.18],[88.812,25.524],[88.446,25.595],[88.093,25.93],[88.352,26.222],[88.333,26.497],[88.401,26.644],[88.76,26.329],[89.349,26.01],[89.729,26.171],[89.843,26.383],[89.835,26.414],[89.852,26.698],[89.375,26.854],[89.09,26.841],[88.868,26.966],[88.722,27.139],[88.532,27.176],[88.425,27.071],[88.281,27.132],[88.038,27.22],[88.186,26.772],[88.11,26.548],[88.24,26.458],[88.28,26.331],[87.85,26.039],[87.853,26.029],[87.841,25.996],[87.847,25.992],[87.822,25.936],[87.827,25.891],[88.067,25.484],[87.711,25.258],[87.891,24.855],[87.839,24.745],[87.89,24.565],[87.639,24.255],[87.44,23.982],[87.234,24.025],[87.085,23.812],[86.801,23.834],[86.801,23.699],[86.486,23.636],[86.31,23.412],[85.885,23.483],[85.859,23.43],[85.885,23.167],[86.241,22.997],[86.559,22.714],[86.845,22.4],[86.728,22.216],[87.029,22.039],[87.101,21.864],[87.243,21.964],[87.442,21.768],[87.485,21.615],[87.789,21.699],[87.956,21.831],[88.186,22.105],[87.998,22.245]]]},"properties":{"st_nm":"West Bengal"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[72.962,20.209],[73.211,20.121],[73.043,20.326],[72.962,20.209]]],[[[72.887,20.462],[72.836,20.453],[72.829,20.368],[72.887,20.462]]],[[[70.92,20.742],[70.977,20.702],[71,20.742],[70.92,20.742]]]]},"properties":{"st_nm":"Dadra and Nagar Haveli and Daman and Diu"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[79.686,11.88],[79.808,11.845],[79.84,11.956],[79.686,11.88]]],[[[79.724,10.929],[79.849,10.827],[79.851,10.985],[79.748,10.996],[79.724,10.929]]],[[[75.555,11.722],[75.542,11.739],[75.537,11.72],[75.555,11.722]]],[[[82.186,16.737],[82.2,16.721],[82.239,16.717],[82.267,16.695],[82.27,16.722],[82.186,16.737]]]]},"properties":{"st_nm":"Puducherry"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[73.054,8.273],[73.018,8.276],[73.043,8.263],[73.054,8.273]]]},"properties":{"st_nm":"Lakshadweep"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[94.213,27.606],[94.462,27.555],[95.137,27.815],[95.514,27.88],[95.519,27.884],[95.97,27.96],[95.774,27.733],[95.874,27.544],[95.857,27.271],[95.634,27.231],[95.484,27.242],[95.377,27.096],[95.369,27.11],[95.196,27.034],[95.234,26.682],[95.496,26.817],[95.684,26.904],[96.022,27.18],[96.606,27.366],[96.86,27.19],[97.164,27.142],[96.862,27.631],[97.253,27.9],[97.371,28.218],[96.663,28.46],[96.314,28.383],[96.326,28.511],[96.585,28.717],[96.519,28.967],[96.15,29.05],[96.244,29.233],[96.089,29.459],[95.27,29.05],[94.679,29.327],[94.187,29.039],[93.962,28.713],[93.34,28.64],[93.224,28.342],[92.802,28.202],[92.734,27.976],[92.468,27.815],[92.257,27.862],[91.881,27.722],[92.014,27.489],[92.113,26.893],[92.36,26.926],[92.656,27.008],[93.061,26.922],[93.398,26.957],[93.698,26.995],[94.219,27.505],[94.266,27.52],[94.213,27.606]]]},"properties":{"st_nm":"Arunachal Pradesh"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[95.369,27.11],[95.377,27.096],[95.484,27.242],[95.634,27.231],[95.857,27.271],[95.874,27.544],[95.774,27.733],[95.97,27.96],[95.519,27.884],[95.514,27.88],[95.137,27.815],[94.462,27.555],[94.213,27.606],[94.266,27.52],[94.219,27.505],[93.698,26.995],[93.398,26.957],[93.061,26.922],[92.656,27.008],[92.36,26.926],[92.113,26.893],[91.704,26.813],[90.951,26.777],[90.336,26.863],[89.852,26.698],[89.835,26.414],[89.843,26.383],[89.729,26.171],[89.843,25.882],[89.872,25.477],[90.02,25.607],[90.122,25.959],[90.434,25.991],[91.026,25.886],[91.008,25.825],[91.335,25.841],[91.723,26.035],[92.173,26.076],[92.274,26.065],[92.152,25.672],[92.444,25.72],[92.661,25.572],[92.569,25.466],[92.792,25.283],[92.54,25.099],[92.425,25.03],[92.516,24.88],[92.214,24.509],[92.295,24.245],[92.422,24.25],[92.532,24.178],[92.762,24.513],[92.896,24.391],[93.009,24.413],[93.087,24.572],[93.175,24.798],[93.247,24.972],[93.47,25.306],[93.329,25.543],[93.513,25.675],[93.776,25.969],[93.955,25.969],[94.164,26.351],[94.314,26.461],[94.586,26.725],[94.736,26.75],[94.791,26.797],[94.924,26.949],[95.196,27.034],[95.369,27.11]]]},"properties":{"st_nm":"Assam"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[95.014,25.891],[95.123,26.348],[95.234,26.682],[95.196,27.034],[94.924,26.949],[94.791,26.797],[94.736,26.75],[94.586,26.725],[94.314,26.461],[94.164,26.351],[93.955,25.969],[93.776,25.969],[93.513,25.675],[93.329,25.543],[93.47,25.306],[93.805,25.463],[93.936,25.559],[94.19,25.548],[94.488,25.605],[94.675,25.445],[94.883,25.587],[95.014,25.891]]]},"properties":{"st_nm":"Nagaland"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[92.199,25.125],[92.425,25.03],[92.54,25.099],[92.792,25.283],[92.569,25.466],[92.661,25.572],[92.444,25.72],[92.152,25.672],[92.274,26.065],[92.173,26.076],[91.723,26.035],[91.335,25.841],[91.008,25.825],[91.026,25.886],[90.434,25.991],[90.122,25.959],[90.02,25.607],[89.872,25.477],[89.974,25.299],[90.234,25.203],[90.97,25.173],[91.355,25.233],[92.017,25.189],[92.199,25.125]]]},"properties":{"st_nm":"Meghalaya"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[94.653,25.115],[94.675,25.445],[94.488,25.605],[94.19,25.548],[93.936,25.559],[93.805,25.463],[93.47,25.306],[93.247,24.972],[93.175,24.798],[93.087,24.572],[93.009,24.413],[92.976,24.116],[93.207,24.047],[93.253,24.021],[93.378,24.088],[93.74,24.006],[94.156,23.848],[94.253,24.114],[94.375,24.494],[94.629,24.756],[94.653,25.115]]]},"properties":{"st_nm":"Manipur"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[91.759,23.266],[91.804,23.515],[92.176,23.707],[92.265,23.727],[92.295,24.245],[92.214,24.509],[92.071,24.377],[91.924,24.109],[91.756,24.142],[91.47,24.062],[91.226,23.732],[91.161,23.595],[91.32,23.277],[91.543,22.999],[91.759,23.266]]]},"properties":{"st_nm":"Tripura"}},{"type":"Feature","geometry":{"type":"MultiPolygon","coordinates":[[[[92.756,12.177],[92.623,12.102],[92.551,11.72],[92.751,11.61],[92.756,12.175],[92.756,12.177]]],[[[92.873,12.331],[92.974,12.543],[92.841,13.391],[92.699,12.329],[92.873,12.331]]],[[[93.837,7.241],[93.646,7.127],[93.8,6.766],[93.915,6.949],[93.837,7.241]]]]},"properties":{"st_nm":"Andaman and Nicobar Islands"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[78.761,29.264],[78.851,29.348],[78.926,29.439],[78.617,29.558],[78.335,29.798],[78.02,29.582],[77.82,29.674],[77.716,29.886],[77.959,30.242],[77.575,30.401],[77.58,30.379],[77.227,29.939],[77.152,29.688],[77.132,29.484],[77.155,29.297],[77.143,29.167],[77.216,28.853],[77.222,28.831],[77.208,28.791],[77.228,28.769],[77.299,28.709],[77.317,28.641],[77.341,28.61],[77.297,28.567],[77.348,28.52],[77.5,28.206],[77.476,28.085],[77.53,27.927],[77.344,27.85],[77.283,27.799],[77.34,27.527],[77.646,27.242],[77.661,26.971],[77.455,26.743],[77.76,26.933],[78.222,26.832],[78.545,26.764],[78.78,26.769],[79.135,26.44],[78.938,25.952],[78.886,25.913],[78.658,25.559],[78.452,25.572],[78.42,25.532],[78.416,25.477],[78.395,25.444],[78.355,25.452],[78.34,25.433],[78.34,25.416],[78.39,25.206],[78.447,25.122],[78.374,25.099],[78.337,25.085],[78.335,25.068],[78.19,24.842],[78.268,24.45],[78.806,24.179],[78.991,24.417],[78.985,24.442],[78.64,25.071],[78.559,25.213],[78.88,25.158],[79.323,25.15],[79.305,25.18],[79.293,25.184],[79.279,25.243],[79.264,25.273],[79.28,25.324],[79.673,25.121],[80.105,25.35],[80.352,25.123],[80.291,25.059],[80.264,25.024],[80.478,24.976],[80.715,25.066],[81.12,24.904],[81.541,25.188],[82.094,24.817],[82.298,24.607],[82.524,24.677],[82.798,24.576],[82.744,24.165],[82.813,23.962],[83.207,23.922],[83.33,24.102],[83.503,24.525],[83.524,24.55],[83.395,24.781],[83.35,25.184],[83.538,25.309],[83.779,25.398],[83.931,25.558],[84.319,25.668],[84.6,25.732],[84.472,25.882],[84.056,26.1],[84.157,26.376],[84.052,26.552],[84.419,26.632],[84.061,26.887],[83.908,27.275],[83.862,27.335],[83.395,27.48],[83.292,27.335],[83.189,27.454],[82.732,27.487],[82.207,27.844],[81.742,27.953],[81.053,28.405],[80.553,28.691],[80.314,28.629],[80.065,28.837],[79.683,28.855],[79.423,28.897],[78.975,29.131],[78.761,29.264]]]},"properties":{"st_nm":"Uttar Pradesh"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[75.933,27.928],[76.055,28.221],[75.893,28.39],[75.67,28.519],[75.474,28.926],[75.528,28.971],[75.346,29.283],[75.24,29.26],[74.603,29.365],[74.526,29.941],[74.448,29.947],[74.298,29.954],[73.895,29.974],[73.968,30.194],[73.398,29.946],[73.283,29.572],[72.945,29.028],[72.662,28.893],[72.3,28.669],[72.206,28.394],[71.928,28.122],[71.881,27.914],[71.205,27.836],[70.758,27.722],[70.677,27.921],[70.371,28.012],[70.026,27.562],[69.587,27.184],[69.51,26.743],[70.174,26.552],[70.14,26.156],[70.099,25.939],[70.269,25.713],[70.674,25.676],[70.665,25.397],[70.888,25.148],[71.112,24.675],[71.188,24.651],[71.287,24.616],[72.058,24.712],[72.335,24.633],[72.959,24.36],[73.002,24.48],[73.067,24.194],[73.378,23.904],[73.369,23.815],[73.656,23.621],[73.627,23.449],[73.959,23.38],[73.982,23.338],[74.32,23.06],[74.734,23.221],[74.772,23.543],[74.941,23.765],[74.908,24.212],[74.697,24.483],[74.993,24.693],[75.191,25.037],[75.352,25.019],[75.184,24.748],[75.549,24.703],[75.785,24.762],[75.921,24.543],[75.728,24.396],[75.837,24.057],[75.462,23.918],[75.69,23.747],[76.213,24.209],[76.881,24.131],[76.844,24.436],[77.069,24.557],[76.877,25.041],[77.312,25.081],[77.367,25.411],[77.083,25.337],[76.594,25.408],[76.546,25.838],[76.852,26.032],[77.12,26.214],[77.375,26.365],[78.222,26.832],[77.76,26.933],[77.455,26.743],[77.661,26.971],[77.646,27.242],[77.34,27.527],[77.283,27.799],[76.977,27.654],[76.97,28.138],[76.854,28.221],[76.543,28.034],[76.312,28.178],[76.225,27.833],[76.077,27.841],[75.933,27.928]]]},"properties":{"st_nm":"Rajasthan"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[77.228,28.769],[77.208,28.791],[77.222,28.831],[77.216,28.853],[76.968,28.812],[76.942,28.798],[76.971,28.698],[76.953,28.668],[76.884,28.503],[77.097,28.509],[77.12,28.489],[77.175,28.405],[77.254,28.483],[77.348,28.52],[77.297,28.567],[77.341,28.61],[77.317,28.641],[77.299,28.709],[77.228,28.769]]]},"properties":{"st_nm":"Delhi"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[77.216,28.853],[77.143,29.167],[77.155,29.297],[77.132,29.484],[77.152,29.688],[77.227,29.939],[77.58,30.379],[77.208,30.488],[77.123,30.563],[77.025,30.749],[76.777,30.904],[76.838,30.754],[76.828,30.682],[76.907,30.459],[76.898,30.445],[76.912,30.426],[76.748,30.429],[76.643,30.15],[76.638,30.147],[76.577,30.101],[76.467,30.099],[76.214,29.84],[76.098,29.81],[75.947,29.729],[75.72,29.814],[75.461,29.807],[75.303,29.56],[75.191,29.844],[74.705,29.975],[74.526,29.941],[74.603,29.365],[75.24,29.26],[75.346,29.283],[75.528,28.971],[75.474,28.926],[75.67,28.519],[75.893,28.39],[76.055,28.221],[75.933,27.928],[76.077,27.841],[76.225,27.833],[76.312,28.178],[76.543,28.034],[76.854,28.221],[76.97,28.138],[76.977,27.654],[77.283,27.799],[77.344,27.85],[77.53,27.927],[77.476,28.085],[77.5,28.206],[77.348,28.52],[77.254,28.483],[77.175,28.405],[77.12,28.489],[77.097,28.509],[76.884,28.503],[76.953,28.668],[76.971,28.698],[76.942,28.798],[76.968,28.812],[77.216,28.853]]]},"properties":{"st_nm":"Haryana"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[88.281,27.132],[88.425,27.071],[88.532,27.176],[88.722,27.139],[88.794,27.417],[88.844,27.993],[88.619,28.098],[88.205,27.942],[88.115,27.619],[88.038,27.22],[88.281,27.132]]]},"properties":{"st_nm":"Sikkim"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[84.419,26.632],[84.052,26.552],[84.157,26.376],[84.056,26.1],[84.472,25.882],[84.6,25.732],[84.319,25.668],[83.931,25.558],[83.779,25.398],[83.538,25.309],[83.35,25.184],[83.395,24.781],[83.524,24.55],[83.503,24.525],[83.873,24.532],[84.009,24.642],[84.327,24.49],[84.497,24.288],[84.802,24.531],[85.088,24.37],[85.331,24.51],[85.374,24.554],[85.677,24.591],[85.902,24.766],[86.055,24.78],[86.133,24.604],[86.452,24.373],[86.611,24.608],[86.913,24.547],[87.052,24.627],[87.176,25.057],[87.478,25.195],[87.552,25.331],[87.711,25.258],[88.067,25.484],[87.827,25.891],[87.822,25.936],[87.847,25.992],[87.841,25.996],[87.853,26.029],[87.85,26.039],[88.28,26.331],[88.24,26.458],[88.11,26.548],[88.034,26.392],[87.659,26.38],[87.162,26.405],[87.043,26.56],[86.723,26.425],[86.029,26.666],[85.816,26.6],[85.729,26.809],[85.255,26.754],[84.758,27.003],[84.62,27.34],[84.097,27.517],[83.862,27.335],[83.908,27.275],[84.061,26.887],[84.419,26.632]]]},"properties":{"st_nm":"Bihar"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[87.639,24.255],[87.89,24.565],[87.839,24.745],[87.891,24.855],[87.711,25.258],[87.552,25.331],[87.478,25.195],[87.176,25.057],[87.052,24.627],[86.913,24.547],[86.611,24.608],[86.452,24.373],[86.133,24.604],[86.055,24.78],[85.902,24.766],[85.677,24.591],[85.374,24.554],[85.331,24.51],[85.088,24.37],[84.802,24.531],[84.497,24.288],[84.327,24.49],[84.009,24.642],[83.873,24.532],[83.503,24.525],[83.33,24.102],[84.016,23.635],[84.074,23.334],[84.038,23.171],[84.293,22.773],[84.012,22.528],[84.429,22.352],[85.07,22.491],[85.029,22.122],[85.238,22.01],[85.397,22.164],[85.683,22.058],[86.009,22.116],[85.963,22.485],[86.067,22.557],[86.728,22.216],[86.845,22.4],[86.559,22.714],[86.241,22.997],[85.885,23.167],[85.859,23.43],[85.885,23.483],[86.31,23.412],[86.486,23.636],[86.801,23.699],[86.801,23.834],[87.085,23.812],[87.234,24.025],[87.44,23.982],[87.639,24.255]]]},"properties":{"st_nm":"Jharkhand"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[75.384,34.362],[75.497,34.234],[75.595,34.198],[76.022,33.998],[76.773,33.251],[76.933,33.028],[77.274,32.874],[77.741,32.969],[78.016,32.62],[78.398,32.525],[78.761,32.654],[78.857,32.44],[79.114,32.384],[79.626,32.74],[79.375,33.085],[79.453,33.258],[78.988,33.334],[79.106,33.617],[78.904,33.976],[79.354,34.036],[79.591,34.282],[79.507,34.475],[80.068,34.714],[80.29,35.607],[79.215,35.979],[78.664,35.858],[77.612,35.468],[77.43,35.654],[76.935,35.783],[76.8,36.047],[76.351,36.359],[75.748,36.588],[75.343,37.052],[74.921,36.905],[74.708,37.077],[73.7,36.684],[73.125,36.687],[72.991,36.457],[72.595,36.262],[72.534,35.917],[73.089,35.882],[73.407,35.563],[73.785,35.525],[73.795,35.244],[74.147,35.097],[74.486,35.11],[74.567,34.873],[74.32,34.787],[74.601,34.737],[75.239,34.629],[75.375,34.388],[75.384,34.362]]]},"properties":{"st_nm":"Ladakh"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[75.375,34.388],[75.239,34.629],[74.601,34.737],[74.32,34.787],[74.567,34.873],[74.486,35.11],[74.147,35.097],[73.749,34.787],[73.39,34.374],[73.488,34.145],[73.598,33.713],[73.564,33.342],[73.688,33.087],[74.447,32.789],[74.659,32.788],[74.889,32.521],[75.205,32.418],[75.341,32.346],[75.513,32.308],[75.837,32.511],[75.802,32.885],[76.222,33.021],[76.41,33.186],[76.748,33.18],[76.773,33.251],[76.022,33.998],[75.595,34.198],[75.497,34.234],[75.384,34.362],[75.375,34.388]]]},"properties":{"st_nm":"Jammu and Kashmir"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[78.311,31.284],[78.484,31.199],[78.881,31.284],[78.846,31.608],[78.673,32.078],[78.398,32.525],[78.016,32.62],[77.741,32.969],[77.274,32.874],[76.933,33.028],[76.773,33.251],[76.748,33.18],[76.41,33.186],[76.222,33.021],[75.802,32.885],[75.837,32.511],[75.932,32.395],[75.601,32.093],[75.598,32.082],[75.961,31.857],[76.017,31.632],[76.289,31.307],[76.392,31.413],[76.646,31.21],[76.733,30.937],[76.777,30.904],[77.025,30.749],[77.123,30.563],[77.208,30.488],[77.58,30.379],[77.575,30.401],[77.815,30.506],[77.704,30.764],[77.829,31.029],[78.311,31.284]]]},"properties":{"st_nm":"Himachal Pradesh"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[75.837,32.511],[75.513,32.308],[75.341,32.346],[75.379,32.183],[74.913,32.044],[74.503,31.74],[74.612,31.5],[74.511,31.133],[74.708,31.072],[74.366,30.893],[74.216,30.691],[73.879,30.36],[73.968,30.194],[73.895,29.974],[74.298,29.954],[74.448,29.947],[74.526,29.941],[74.705,29.975],[75.191,29.844],[75.303,29.56],[75.461,29.807],[75.72,29.814],[75.947,29.729],[76.098,29.81],[76.214,29.84],[76.467,30.099],[76.577,30.101],[76.638,30.147],[76.643,30.15],[76.748,30.429],[76.912,30.426],[76.898,30.445],[76.907,30.459],[76.828,30.682],[76.739,30.693],[76.71,30.761],[76.838,30.754],[76.777,30.904],[76.733,30.937],[76.646,31.21],[76.392,31.413],[76.289,31.307],[76.017,31.632],[75.961,31.857],[75.598,32.082],[75.601,32.093],[75.932,32.395],[75.837,32.511]]]},"properties":{"st_nm":"Punjab"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[80.102,30.789],[79.407,31.073],[79.072,31.456],[78.881,31.284],[78.484,31.199],[78.311,31.284],[77.829,31.029],[77.704,30.764],[77.815,30.506],[77.575,30.401],[77.959,30.242],[77.716,29.886],[77.82,29.674],[78.02,29.582],[78.335,29.798],[78.617,29.558],[78.926,29.439],[78.851,29.348],[78.761,29.264],[78.975,29.131],[79.423,28.897],[79.683,28.855],[80.065,28.837],[80.074,28.941],[80.319,29.301],[80.242,29.444],[80.366,29.74],[80.929,30.174],[80.608,30.471],[80.213,30.584],[80.102,30.789]]]},"properties":{"st_nm":"Uttarakhand"}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[76.828,30.682],[76.838,30.754],[76.71,30.761],[76.739,30.693],[76.828,30.682]]]},"properties":{"st_nm":"Chandigarh"}}]};
+
+const STATUS={CR:"Critically Endangered",EN:"Endangered",VU:"Vulnerable",NT:"Near Threatened",LC:"Least Concern",DD:"Data Deficient"};
+let selSpecies=null, gbifCache={};
+const reduce=window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+function isNum(s){return /^[~<>]?\s*[\d,]/.test(String(s));}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+/* ── species cards ── */
+const grids={Mammal:"sg-mammal",Bird:"sg-bird","Reptile & Amphibian":"sg-reptile"};
+ORDER.forEach(key=>{
+  const s=SPECIES[key],g=document.getElementById(grids[s.cat]);
+  if(!g)return;
+  const c=document.createElement("div");
+  c.className="sp-card";c.dataset.key=key;
+  c.setAttribute("role","button");c.setAttribute("tabindex","0");
+  const pop=isNum(s.pop)?`<div class="sp-pop">${s.pop}</div>`:`<div class="sp-pop word">${s.pop}</div>`;
+  c.innerHTML=`
+    <div class="sp-card-top"><span class="sp-em">${s.emoji}</span><span class="sp-badge ${s.status}">${s.status}</span></div>
+    <div class="sp-name">${esc(s.name)}</div>
+    <div class="sp-sci">${esc(s.sci)}</div>
+    ${pop}
+    <div class="sp-unit">${esc(s.unit)}</div>`;
+  c.onclick=()=>selectSpecies(key);
+  c.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();selectSpecies(key);}};
+  g.appendChild(c);
+});
+
+/* ── map ── */
+const svg=d3.select("#map"),W=560,H=620,PAD=14,features=INDIA.features;
+let mnL=1/0,mxL=-1/0,mnB=1/0,mxB=-1/0;
+features.forEach(f=>{const c=f.geometry.coordinates,mp=f.geometry.type==="MultiPolygon";(mp?c:[c]).forEach(p=>p.forEach(r=>r.forEach(([lo,la])=>{if(lo<mnL)mnL=lo;if(lo>mxL)mxL=lo;if(la<mnB)mnB=la;if(la>mxB)mxB=la;})));});
+const kx=Math.cos(((mnB+mxB)/2)*Math.PI/180),aW=W-2*PAD,aH=H-2*PAD,sc=Math.min(aW/((mxL-mnL)*kx),aH/(mxB-mnB));
+const ox=PAD+(aW-(mxL-mnL)*kx*sc)/2,oy=PAD+(aH-(mxB-mnB)*sc)/2;
+function proj(p){return[ox+(p[0]-mnL)*kx*sc,oy+(mxB-p[1])*sc];}
+function prr(r){return r.map(proj);}
+function pgm(g){if(g.type==="Polygon")return{type:g.type,coordinates:g.coordinates.map(prr)};if(g.type==="MultiPolygon")return{type:g.type,coordinates:g.coordinates.map(po=>po.map(prr))};return g;}
+const PROJ=features.map(f=>({type:"Feature",properties:f.properties,geometry:pgm(f.geometry)}));
+const gpath=d3.geoPath(),tip=document.getElementById("tip");
+const gSt=svg.append("g");
+const paths=gSt.selectAll("path").data(PROJ).join("path")
+  .attr("d",gpath).attr("class","state").attr("fill","#eef0ea")
+  .on("mousemove",(e,d)=>showTip(e,d))
+  .on("mouseleave",()=>tip.style.opacity=0)
+  .on("click",(e,d)=>openStateModal(d.properties.st_nm));
+if(!reduce)gSt.attr("opacity",0).transition().duration(500).attr("opacity",1);
+function ramp(t){return d3.interpolateRgbBasis(["#d1fae5","#6ee7b7","#2d6a4f","#14532d"])(t);}
+
+function paintMap(key){
+  const s=SPECIES[key],vals=Object.values(s.states).filter(v=>typeof v==="number"),max=vals.length?Math.max(...vals):1;
+  document.getElementById("legRange").style.display=Object.values(s.states).some(v=>v===null)?"flex":"none";
+  document.getElementById("mapTitle").textContent=s.name;
+  document.getElementById("mapPeak").textContent=vals.length?"peak "+max.toLocaleString():"";
+  paths.transition().duration(reduce?0:440).attr("fill",d=>{
+    const nm=d.properties.st_nm;
+    if(!(nm in s.states))return"#eef0ea";
+    const v=s.states[nm];
+    if(v===null)return"#6ee7b7";
+    return ramp(0.08+0.92*Math.sqrt(v/max));
+  });
+  paths.classed("sel",()=>false);
+}
+
+function showTip(e,d){
+  const nm=d.properties.st_nm;
+  let line="<span class='tc none'>click to explore</span>";
+  if(selSpecies){const s=SPECIES[selSpecies],has=(nm in s.states),v=has?s.states[nm]:undefined;
+    line=!has?`<span class='tc none'>not recorded</span>`:v===null?`<span class='tc range'>range state</span>`:`<span class='tc'>${v.toLocaleString()} ${s.emoji}</span>`;}
+  tip.innerHTML=`<div class='tn'>${esc(nm)}</div>${line}`;tip.style.opacity=1;
+  let x=e.clientX+12,y=e.clientY+12;const r=tip.getBoundingClientRect();
+  if(x+r.width>innerWidth)x=e.clientX-r.width-12;if(y+r.height>innerHeight)y=e.clientY-r.height-12;
+  tip.style.left=x+"px";tip.style.top=y+"px";
+}
+
+/* ── sparkline ── */
+function sparkSVG(t){
+  if(!t)return"";
+  const w=190,h=44,p=4,xs=t.map(d=>d[0]),ys=t.map(d=>d[1]);
+  const x=d3.scaleLinear().domain([Math.min(...xs),Math.max(...xs)]).range([p,w-p]);
+  const y=d3.scaleLinear().domain([0,Math.max(...ys)*1.1]).range([h-p,p]);
+  const ln=t.map((d,i)=>(i?"L":"M")+x(d[0]).toFixed(1)+" "+y(d[1]).toFixed(1)).join(" ");
+  const ar=ln+` L${x(xs[xs.length-1]).toFixed(1)} ${h-p} L${x(xs[0]).toFixed(1)} ${h-p}Z`;
+  const a=t[0],b=t[t.length-1];
+  return `<svg width="${w}" height="${h+14}" viewBox="0 0 ${w} ${h+14}" style="display:block">
+    <path d="${ar}" fill="#2d6a4f" opacity=".09"/>
+    <path d="${ln}" fill="none" stroke="#2d6a4f" stroke-width="2.2" stroke-linejoin="round"/>
+    <circle cx="${x(b[0]).toFixed(1)}" cy="${y(b[1]).toFixed(1)}" r="3.2" fill="#2d6a4f"/>
+    <text x="${p}" y="${h+11}" font-family="Inter,sans-serif" font-size="10" fill="#9ca3af">${a[0]}: ${a[1].toLocaleString()}</text>
+    <text x="${w-p}" y="${h+11}" text-anchor="end" font-family="Inter,sans-serif" font-size="10" fill="#2d6a4f">${b[0]}: ${b[1].toLocaleString()}</text>
+  </svg>`;
+}
+
+/* ── select species ── */
+function selectSpecies(key){
+  selSpecies=key;
+  document.querySelectorAll(".sp-card").forEach(c=>c.dataset.sel=c.dataset.key===key?"1":"0");
+  paintMap(key);
+  updatePanel(key);
+  // smooth scroll to atlas on mobile
+  if(window.innerWidth<700) document.getElementById("atlas-section").scrollIntoView({behavior:"smooth"});
+}
+
+function updatePanel(key){
+  const s=SPECIES[key];
+  const pop=isNum(s.pop)?`<div class="ic-pop">${s.pop}</div>`:`<div class="ic-pop word">${s.pop}</div>`;
+  document.getElementById("infoCard").innerHTML=`
+    <div class="info-card">
+      <div class="ic-header">
+        <span class="ic-em">${s.emoji}</span>
+        <div>
+          <div class="ic-name">${esc(s.name)}</div>
+          <div class="ic-sci">${esc(s.sci)}</div>
+          <span class="ic-status ${s.status}">${s.status} · ${STATUS[s.status]}</span>
+        </div>
+      </div>
+      <div class="ic-divider"></div>
+      ${pop}
+      <div class="ic-unit">${esc(s.unit)}</div>
+      ${s.year?`<div class="ic-year">${s.year} estimate</div>`:""}
+      ${s.trend?`<div class="spark"><div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:7px">Population trend</div>${sparkSVG(s.trend)}</div>`:""}
+      <div class="ic-divider"></div>
+      <div class="ic-blurb">${esc(s.blurb)}</div>
+      <div class="ic-source">${esc(s.source)}</div>
+      <button class="ic-cta" onclick="openSpModal('${key}')">View state breakdown →</button>
+    </div>`;
+
+  const entries=Object.entries(s.states).filter(([,v])=>typeof v==="number").sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const rows=entries.map(([nm,v])=>`<div class="snap-row"><span class="snap-label">${esc(nm)}</span><span class="snap-val green">${v.toLocaleString()}</span></div>`).join("")
+    ||(Object.keys(s.states).length?`<div class="snap-row"><span class="snap-label" style="font-style:italic;color:#9ca3af">Range state — no per-state count</span></div>`:"");
+  document.getElementById("spotCard").style.display="block";
+  document.getElementById("spotBody").innerHTML=`
+    <div class="snap-row"><span class="snap-label">IUCN status</span><span class="snap-val">${STATUS[s.status]}</span></div>
+    <div class="snap-row"><span class="snap-label">Total population</span><span class="snap-val green">${esc(s.pop)}</span></div>
+    ${rows}`;
+  document.getElementById("spotMore").onclick=()=>openSpModal(key);
+}
+
+/* ── species modal ── */
+function openSpModal(key){
+  const s=SPECIES[key];
+  const pop=isNum(s.pop)?`<div class="m-stat-n">${s.pop}</div>`:`<div class="m-stat-n word">${s.pop}</div>`;
+  const vals=Object.values(s.states).filter(v=>typeof v==="number"),max=vals.length?Math.max(...vals):1;
+  const stateRows=Object.entries(s.states).sort((a,b)=>{if(a[1]===null&&b[1]===null)return 0;if(a[1]===null)return 1;if(b[1]===null)return -1;return b[1]-a[1];})
+    .map(([nm,v])=>`<div class="state-row"><div><div class="sn">${esc(nm)}</div>${v!==null?`<div class="bar-wrap"><div class="bar" style="width:${Math.round(v/max*100)}%"></div></div>`:""}</div>${v===null?`<div class="range">Range state</div>`:`<div class="sv">${v.toLocaleString()}</div>`}</div>`).join("");
+  document.getElementById("spModalTitle").innerHTML=`<div class="m-sp-em">${s.emoji}</div><div class="m-sp-name">${esc(s.name)}</div><div class="m-sp-sci">${esc(s.sci)}</div><span class="m-badge ${s.status}">${s.status} · ${STATUS[s.status]}</span>`;
+  document.getElementById("spModalBody").innerHTML=`
+    <div class="m-stat-row"><div class="m-stat">${pop}<div class="m-stat-l">${esc(s.unit)}</div></div><div class="m-stat"><div class="m-stat-n" style="font-size:22px">${Object.keys(s.states).length}</div><div class="m-stat-l">States / UTs</div></div></div>
+    ${s.year?`<div style="font-size:12px;color:#9ca3af;margin:-6px 0 14px;font-weight:500">${s.year} estimate</div>`:""}
+    ${s.trend?`<div style="margin-bottom:18px"><div class="m-spark-title">Population trend</div>${sparkSVG(s.trend)}</div>`:""}
+    <p class="m-blurb">${esc(s.blurb)}</p>
+    <div class="state-table"><div class="state-table-head"><span>State / UT</span><span>Count</span></div>${stateRows}</div>`;
+  document.getElementById("spModalFooter").textContent=s.source;
+  document.getElementById("spModal").classList.add("open");
+  document.getElementById("spClose").focus();
+}
+
+/* ── state modal ── */
+function openStateModal(nm){
+  const here=[];ORDER.forEach(k=>{const s=SPECIES[k];if(nm in s.states)here.push([k,s.states[nm]]);});
+  here.sort((a,b)=>{const av=a[1]===null?-1:a[1],bv=b[1]===null?-1:b[1];return bv-av;});
+  const rows=here.map(([k,v])=>{const s=SPECIES[k];
+    const cnt=v===null?`<div class="sp-rng">Range state</div>`:`<div class="sp-cnt">${v.toLocaleString()}<small>${s.year||""}</small></div>`;
+    return `<div class="state-sp-row" onclick="selectSpecies('${k}');closeModals()"><span class="sp-em">${s.emoji}</span><div class="sp-meta"><div class="sp-nm">${esc(s.name)}<span class="pill ${s.status}">${s.status}</span></div><div class="sp-sci">${esc(s.sci)}</div></div>${cnt}</div>`;
+  }).join("")||`<p style="color:#9ca3af;font-size:14px">No curated flagship species listed for this state.</p>`;
+  document.getElementById("stModalTitle").innerHTML=`<div style="font-size:24px;font-weight:700;letter-spacing:-.02em">${esc(nm)}</div><div style="font-size:13px;color:#6b7280;margin-top:3px">${here.length} curated rare species</div>`;
+  document.getElementById("stModalBody").innerHTML=`<div class="state-sp-list">${rows}</div><button class="gbif-trigger" id="gbifBtn">🔍 Explore all recorded wildlife in ${esc(nm)} (live from GBIF)</button><div id="gbifOut"></div>`;
+  document.getElementById("gbifBtn").onclick=()=>loadGBIF(nm);
+  if(gbifCache[nm])drawGBIF(nm);
+  document.getElementById("stModal").classList.add("open");
+  document.getElementById("stClose").focus();
+}
+
+/* ── GBIF ── */
+async function loadGBIF(nm){
+  const out=document.getElementById("gbifOut");
+  if(gbifCache[nm]){drawGBIF(nm);return;}
+  out.innerHTML=`<div class="gbif-note"><span class="spin"></span>Loading from GBIF…</div>`;
+  const bb=STATE_BBOX[nm];if(!bb){out.innerHTML=`<div class="gbif-note">No bounding box.</div>`;return;}
+  const [w,s,e,n]=bb;
+  try{
+    const j=await(await fetch(`https://api.gbif.org/v1/occurrence/search?country=IN&hasCoordinate=true&taxonKey=1&decimalLatitude=${s},${n}&decimalLongitude=${w},${e}&limit=300`)).json();
+    const m={};
+    (j.results||[]).forEach(r=>{const key=r.species||r.scientificName;if(!key||(r.taxonRank&&r.taxonRank!=="SPECIES"&&r.taxonRank!=="SUBSPECIES"))return;if(!m[key])m[key]={n:0,sci:r.scientificName||key,cls:r.class||"",cat:"",vn:r.vernacularName||""};m[key].n++;if(r.iucnRedListCategory&&!m[key].cat)m[key].cat=r.iucnRedListCategory;if(r.vernacularName&&!m[key].vn)m[key].vn=r.vernacularName;});
+    const arr=Object.entries(m).map(([k,v])=>({sp:k,...v})).sort((a,b)=>b.n-a.n);
+    gbifCache[nm]={total:j.count||0,sample:(j.results||[]).length,species:arr};drawGBIF(nm);
+  }catch{out.innerHTML=`<div class="gbif-note">Couldn't reach GBIF. Check your connection.</div>`;}
+}
+function drawGBIF(nm){
+  const out=document.getElementById("gbifOut"),d=gbifCache[nm];
+  if(!d.species.length){out.innerHTML=`<div class="gbif-note">No records found.</div>`;return;}
+  const rows=d.species.slice(0,60).map(x=>{const cat=x.cat&&x.cat!=="NOT_APPLICABLE"?`<span class="pill ${x.cat}">${x.cat}</span>`:"";return `<div class="gbif-row"><div class="gn"><div class="gt">${esc(x.vn||x.sp)}${cat}</div><div class="gs">${esc(x.sp)}${x.cls?" · "+esc(x.cls):""}</div></div><div class="gc">${x.n}×</div></div>`;}).join("");
+  out.innerHTML=`<div class="gbif-note"><b>${d.species.length}</b> species · ${d.sample} records from <b>${d.total.toLocaleString()}</b> total · <span class="live">Live from GBIF</span></div><div class="gbif-list">${rows}</div>`;
+}
+
+/* ── modal close ── */
+function closeModals(){document.querySelectorAll(".modal-overlay").forEach(m=>m.classList.remove("open"));}
+document.getElementById("spClose").onclick=closeModals;
+document.getElementById("stClose").onclick=closeModals;
+document.querySelectorAll(".modal-overlay").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)closeModals();}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModals();});
+</script>
+</body>
+</html>

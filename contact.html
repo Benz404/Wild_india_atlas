@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Contact Us · Wild India Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%232d6a4f'/><text x='16' y='22' text-anchor='middle' font-size='18'>🌿</text></svg>">
+<style>
+
+
+/* ── reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:"Inter",system-ui,sans-serif;background:#f8f9fa;color:#111;-webkit-font-smoothing:antialiased;line-height:1.5}
+
+/* ── layout ── */
+.page{max-width:1200px;margin:0 auto;padding:0 24px 80px}
+
+/* ── header ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  height:62px;background:#fff;border-bottom:1px solid #e5e7eb;
+  position:sticky;top:0;z-index:40;width:100%;
+}
+.header-inner{
+  max-width:1200px;width:100%;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.logo-icon{font-size:22px}
+.logo-name{font-size:17px;font-weight:700;letter-spacing:-.02em;color:#111}
+.logo-name span{color:#2d6a4f}
+.header-right{display:flex;align-items:center;gap:16px}
+.header-link{font-size:13px;color:#2d6a4f;text-decoration:none;font-weight:500}
+.header-link:hover{text-decoration:underline}
+
+/* ── hero ── */
+.hero{background:#fff;border-bottom:1px solid #e5e7eb}
+.hero-inner{max-width:1200px;margin:0 auto;padding:44px 32px 36px}
+.hero-inner{max-width:1200px;margin:0 auto}
+.hero h1{font-size:clamp(28px,4.5vw,44px);font-weight:700;letter-spacing:-.03em;line-height:1.1;margin-bottom:10px;color:#111}
+.hero h1 span{color:#2d6a4f}
+.hero p{font-size:15px;color:#6b7280;max-width:54ch;line-height:1.6}
+
+/* ── stat cards ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat-card{
+  background:#fff;border:1px solid #e5e7eb;border-radius:12px;
+  padding:18px 20px;transition:border-color .15s,box-shadow .15s;
+}
+.stat-card:hover{border-color:#2d6a4f;box-shadow:0 2px 12px rgba(45,106,79,.08)}
+.stat-n{font-size:28px;font-weight:700;letter-spacing:-.03em;color:#2d6a4f;line-height:1}
+.stat-l{font-size:12px;color:#9ca3af;margin-top:5px;font-weight:500}
+.stat-sub{font-size:11px;color:#d1fae5;background:#2d6a4f;display:inline-block;padding:1px 6px;border-radius:3px;margin-top:6px;font-weight:600}
+
+/* ── section headings ── */
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:36px 0 16px;
+}
+.section-title{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af}
+
+/* ── species cards grid ── */
+.species-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:32px}
+.sp-card{
+  background:#fff;border:1px solid #e5e7eb;border-radius:12px;
+  padding:16px;cursor:pointer;
+  transition:border-color .15s,box-shadow .15s,transform .1s;
+  display:flex;flex-direction:column;gap:8px;
+  position:relative;overflow:hidden;
+}
+.sp-card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:3px;
+  background:#e5e7eb;transition:background .15s;
+}
+.sp-card:hover{border-color:#2d6a4f;box-shadow:0 4px 16px rgba(45,106,79,.10);transform:translateY(-1px)}
+.sp-card:hover::before{background:#2d6a4f}
+.sp-card[data-sel="1"]{border-color:#2d6a4f;box-shadow:0 4px 16px rgba(45,106,79,.12)}
+.sp-card[data-sel="1"]::before{background:#2d6a4f}
+.sp-top{display:flex;align-items:flex-start;justify-content:space-between}
+.sp-em{font-size:24px;line-height:1}
+.badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;color:#fff;letter-spacing:.04em}
+.badge.CR{background:#dc2626}.badge.EN{background:#d97706}.badge.VU{background:#b45309}
+.sp-name{font-size:13px;font-weight:600;color:#111;line-height:1.2}
+.sp-sci{font-size:11px;color:#9ca3af;font-style:italic;margin-top:1px}
+.sp-pop{font-size:20px;font-weight:700;color:#2d6a4f;letter-spacing:-.02em;margin-top:2px}
+.sp-pop-word{font-size:14px;font-weight:600;color:#2d6a4f;margin-top:2px}
+.sp-unit{font-size:10.5px;color:#9ca3af;margin-top:1px}
+
+/* ── main grid ── */
+.main-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.main-grid{grid-template-columns:1fr}}
+
+/* ── map card ── */
+.map-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}
+.map-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;border-bottom:1px solid #f3f4f6;
+}
+.map-title{font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em}
+.map-peak{font-size:12px;color:#2d6a4f;font-weight:600}
+svg.map{width:100%;height:auto;display:block}
+.state{stroke:#fff;stroke-width:.7px;cursor:pointer;transition:fill .4s ease}
+.state:hover{stroke:#374151;stroke-width:1.2px}
+.state.sel{stroke:#2d6a4f;stroke-width:1.8px}
+.map-footer{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 16px;border-top:1px solid #f3f4f6;flex-wrap:wrap;
+}
+.legend-ramp{display:flex;align-items:center;gap:8px;font-size:11px;color:#9ca3af}
+.rampbar{width:90px;height:6px;border-radius:3px;background:linear-gradient(90deg,#d1fae5,#2d6a4f);border:1px solid #e5e7eb}
+.legend-dot{display:flex;align-items:center;gap:5px;font-size:11px;color:#9ca3af}
+.legend-dot i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* ── right panel ── */
+.right-panel{display:flex;flex-direction:column;gap:12px}
+
+/* info card */
+.info-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;min-height:200px}
+.info-card .placeholder{color:#d1d5db;font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:180px;text-align:center}
+.info-card .ph-em{font-size:36px;opacity:.4}
+
+/* spotlight card */
+.spotlight{background:#fff;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}
+.spotlight-head{padding:14px 18px 12px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between}
+.spotlight-title{font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.06em}
+.spotlight-body{padding:16px 18px}
+.fact-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid #f9fafb}
+.fact-row:last-child{border-bottom:none}
+.fact-label{font-size:13px;color:#6b7280}
+.fact-value{font-size:13px;font-weight:600;color:#111}
+.fact-value.green{color:#2d6a4f}
+.status-tag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;color:#fff}
+.status-tag.CR{background:#dc2626}.status-tag.EN{background:#d97706}.status-tag.VU{background:#b45309}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:100;display:none;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(3px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:#fff;border-radius:18px;width:100%;max-width:680px;
+  max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 24px 80px rgba(0,0,0,.18);
+}
+.modal-head{
+  padding:20px 24px 18px;border-bottom:1px solid #f3f4f6;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  flex-shrink:0;
+}
+.modal-close{
+  background:none;border:none;cursor:pointer;color:#9ca3af;
+  font-size:22px;line-height:1;padding:2px 4px;border-radius:5px;
+  transition:color .12s,background .12s;
+}
+.modal-close:hover{color:#111;background:#f3f4f6}
+.modal-body{padding:24px;overflow-y:auto;flex:1}
+.modal-footer{padding:16px 24px;border-top:1px solid #f3f4f6;flex-shrink:0;font-size:11.5px;color:#9ca3af;line-height:1.5}
+
+/* modal species header */
+.m-sp-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.m-sp-em{font-size:36px}
+.m-sp-name{font-size:24px;font-weight:700;letter-spacing:-.02em;color:#111}
+.m-sp-sci{font-size:14px;color:#9ca3af;font-style:italic;margin-top:2px}
+.m-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;color:#fff;margin-top:6px;display:inline-block}
+.m-badge.CR{background:#dc2626}.m-badge.EN{background:#d97706}.m-badge.VU{background:#b45309}
+
+/* modal big number */
+.m-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px}
+.m-stat{background:#f8f9fa;border-radius:10px;padding:16px}
+.m-stat-n{font-size:32px;font-weight:700;color:#2d6a4f;letter-spacing:-.03em;line-height:1}
+.m-stat-n.word{font-size:20px}
+.m-stat-l{font-size:12px;color:#9ca3af;margin-top:4px}
+.m-blurb{font-size:14px;color:#374151;line-height:1.65;margin-bottom:20px}
+
+/* trend sparkline in modal */
+.m-spark{margin-bottom:20px}
+.m-spark-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:8px}
+
+/* state breakdown table */
+.state-table{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:20px}
+.state-table-head{
+  display:grid;grid-template-columns:1fr auto;gap:8px;
+  padding:9px 14px;background:#f8f9fa;
+  font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:1px solid #e5e7eb;
+}
+.state-row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 14px;border-bottom:1px solid #f3f4f6;align-items:center}
+.state-row:last-child{border-bottom:none}
+.state-row .sn{font-size:13px;font-weight:500}
+.state-row .sv{font-size:13px;font-weight:700;color:#2d6a4f}
+.state-row .range{font-size:13px;color:#9ca3af}
+.state-row .bar-wrap{width:80px;height:5px;background:#f3f4f6;border-radius:3px;margin-top:3px}
+.state-row .bar{height:5px;background:#2d6a4f;border-radius:3px}
+
+/* state modal */
+.state-modal-header{margin-bottom:20px}
+.state-modal-title{font-size:28px;font-weight:700;letter-spacing:-.02em;color:#111}
+.state-modal-sub{font-size:14px;color:#6b7280;margin-top:4px}
+.state-sp-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.state-sp-row{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+.state-sp-row:hover{border-color:#2d6a4f;background:#f0fdf4}
+.state-sp-row .sp-em{font-size:20px;width:26px;text-align:center}
+.state-sp-row .sp-meta{flex:1;min-width:0}
+.state-sp-row .sp-nm{font-size:14px;font-weight:500}
+.state-sp-row .sp-sci{font-size:11.5px;color:#9ca3af;font-style:italic}
+.state-sp-row .sp-cnt{font-size:17px;font-weight:700;color:#2d6a4f;text-align:right}
+.state-sp-row .sp-cnt small{display:block;font-size:10px;font-weight:400;color:#9ca3af}
+.state-sp-row .sp-rng{font-size:13px;color:#9ca3af;font-style:italic}
+
+/* gbif inside modal */
+.gbif-trigger{
+  width:100%;padding:12px 16px;border:1.5px dashed #e5e7eb;border-radius:10px;
+  background:#fff;color:#6b7280;font-size:13px;font-weight:500;
+  cursor:pointer;transition:border-color .15s,color .15s;
+  font-family:"Inter",system-ui;text-align:left;
+}
+.gbif-trigger:hover{border-color:#2d6a4f;color:#2d6a4f}
+.gbif-note{font-size:12px;color:#9ca3af;line-height:1.5;margin:10px 0 6px}
+.gbif-note b{color:#6b7280}
+.gbif-note .live{color:#2d6a4f;font-weight:600}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #e5e7eb;border-top-color:#2d6a4f;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.gbif-list{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-top:8px;max-height:280px;overflow-y:auto}
+.gbif-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #f3f4f6}
+.gbif-row:last-child{border-bottom:none}
+.gbif-row .gn{flex:1;min-width:0}
+.gbif-row .gt{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gbif-row .gs{font-size:11px;color:#9ca3af;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gbif-row .gc{font-size:11px;color:#9ca3af;white-space:nowrap}
+
+/* pills */
+.pill{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;color:#fff;margin-left:5px}
+.pill.CR{background:#dc2626}.pill.EN{background:#d97706}.pill.VU{background:#b45309}
+.pill.LC{background:#2d6a4f}.pill.NT{background:#65a30d}.pill.DD,.pill.NA{background:#9ca3af}
+
+/* ── tooltip ── */
+.tip{
+  position:fixed;pointer-events:none;z-index:200;
+  background:#fff;border:1px solid #e5e7eb;border-radius:8px;
+  padding:8px 12px;font-size:13px;opacity:0;transition:opacity .1s;
+  box-shadow:0 4px 16px rgba(0,0,0,.09);max-width:200px;
+  font-family:"Inter",system-ui;
+}
+.tip .tn{font-weight:600;margin-bottom:2px}
+.tip .tc{font-size:12px;color:#2d6a4f}
+.tip .tc.range{color:#6b7280;font-style:italic}
+.tip .tc.none{color:#d1d5db}
+
+/* footer replaced with .footer-wrap */
+
+
+/* ── header enrichment ── */
+.header-nav{display:flex;align-items:center;gap:6px}
+.nav-pill{
+  font-size:12.5px;font-weight:500;color:#6b7280;text-decoration:none;
+  padding:5px 11px;border-radius:999px;transition:background .15s,color .15s;
+  white-space:nowrap;
+}
+.nav-pill:hover{background:#f3f4f6;color:#111}
+.nav-pill.active{background:#f0fdf4;color:#2d6a4f;font-weight:600}
+.nav-cta{
+  font-size:12.5px;font-weight:600;color:#fff;background:#2d6a4f;
+  text-decoration:none;padding:6px 14px;border-radius:999px;
+  transition:background .15s;white-space:nowrap;
+  display:flex;align-items:center;gap:5px;
+}
+.nav-cta:hover{background:#1a4d36}
+.logo-badge{
+  font-size:9px;font-weight:700;letter-spacing:.06em;
+  background:#ecfdf5;color:#2d6a4f;border:1px solid #d1fae5;
+  padding:2px 6px;border-radius:4px;margin-left:4px;
+}
+
+/* ── hero enhancement ── */
+.hero-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:#2d6a4f;
+  background:#f0fdf4;border:1px solid #d1fae5;
+  padding:5px 12px;border-radius:999px;margin-bottom:16px;
+}
+.hero-tag::before{content:"🌿";font-size:13px}
+.hero-desc{font-size:15px;color:#6b7280;max-width:52ch;line-height:1.65;margin-bottom:0}
+
+/* ── stats enhancement ── */
+.stat-card{position:relative;overflow:hidden}
+.stat-card::after{
+  content:"";position:absolute;right:-16px;bottom:-16px;
+  width:64px;height:64px;border-radius:50%;
+  background:currentColor;opacity:.04;
+}
+
+/* ── footer ── */
+.footer-wrap{
+  background:#f8f9fa;border-top:1px solid #e5e7eb;
+  padding:48px 0 0;margin-top:64px;
+}
+.footer-inner{max-width:1200px;margin:0 auto;padding:0 32px}
+.footer-grid{
+  display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;
+  gap:40px;padding-bottom:40px;border-bottom:1px solid #e5e7eb;
+}
+@media(max-width:860px){.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.footer-grid{grid-template-columns:1fr}}
+.footer-brand{}
+.footer-logo{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.footer-logo-icon{font-size:22px}
+.footer-logo-name{font-size:16px;font-weight:700;letter-spacing:-.01em;color:#111}
+.footer-logo-name span{color:#2d6a4f}
+.footer-tagline{font-size:13px;color:#6b7280;line-height:1.6;max-width:26ch;margin-bottom:16px}
+.footer-credit-name{font-size:13px;color:#374151;margin-bottom:3px}
+.footer-credit-name a{color:#2d6a4f;font-weight:600;text-decoration:none}
+.footer-credit-name a:hover{text-decoration:underline}
+.footer-collab{font-size:12px;color:#9ca3af}
+.footer-collab a{color:#6b7280;text-decoration:none}
+.footer-collab a:hover{color:#2d6a4f}
+
+.footer-col-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:12px}
+.footer-links{display:flex;flex-direction:column;gap:7px}
+.footer-link{font-size:13px;color:#6b7280;text-decoration:none;transition:color .12s}
+.footer-link:hover{color:#2d6a4f}
+
+.footer-bottom{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 0;flex-wrap:wrap;gap:10px;
+}
+.footer-copy{font-size:12px;color:#9ca3af}
+.footer-badges{display:flex;gap:8px}
+.footer-badge{
+  font-size:11px;color:#9ca3af;border:1px solid #e5e7eb;
+  padding:3px 9px;border-radius:4px;text-decoration:none;background:#fff;
+}
+.footer-badge:hover{color:#2d6a4f;border-color:#2d6a4f}
+
+/* ── accessibility ── */
+:focus-visible{outline:2px solid #2d6a4f;outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+@media(max-width:600px){.hero h1{font-size:26px}.m-stat-row{grid-template-columns:1fr}.foot-sources{text-align:left}}
+
+
+
+/* page-specific extras */
+
+.page-hero{background:#fff;border-bottom:1px solid #e5e7eb;padding:52px 32px 44px}
+.page-hero-inner{max-width:1200px;margin:0 auto}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#2d6a4f;background:#f0fdf4;border:1px solid #d1fae5;padding:5px 12px;border-radius:999px;margin-bottom:16px}
+.page-h1{font-size:clamp(28px,4vw,42px);font-weight:700;letter-spacing:-.03em;line-height:1.1;margin-bottom:12px;color:#111}
+.page-sub{font-size:15px;color:#6b7280;max-width:54ch;line-height:1.65}
+
+.contact-wrap{max-width:1200px;margin:0 auto;padding:40px 32px 72px;display:grid;grid-template-columns:1.15fr 1fr;gap:24px;align-items:start}
+@media(max-width:860px){.contact-wrap{grid-template-columns:1fr}}
+
+/* form card */
+.form-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:30px}
+.form-title{font-size:18px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px;color:#111}
+.form-sub{font-size:13.5px;color:#6b7280;line-height:1.55;margin-bottom:24px}
+.frow{margin-bottom:18px}
+.frow-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:520px){.frow-2{grid-template-columns:1fr}}
+label{display:block;font-size:12.5px;font-weight:600;color:#374151;margin-bottom:6px;letter-spacing:.01em}
+input[type=text],input[type=email],select,textarea{width:100%;padding:10px 13px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;color:#111;background:#fff;font-family:"Inter",system-ui;outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:#2d6a4f;box-shadow:0 0 0 3px rgba(45,106,79,.08)}
+textarea{resize:vertical;min-height:130px;line-height:1.55}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center}
+.submit-btn{width:100%;padding:13px;background:#2d6a4f;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;font-family:"Inter",system-ui;transition:background .15s;margin-top:4px}
+.submit-btn:hover{background:#1a4d36}
+.form-note{font-size:11.5px;color:#9ca3af;margin-top:10px;text-align:center;line-height:1.5}
+.success-box{display:none;background:#f0fdf4;border:1px solid #d1fae5;border-radius:12px;padding:28px;text-align:center;margin-top:16px}
+.success-box.show{display:block}
+.success-icon{font-size:36px;margin-bottom:10px}
+.success-title{font-size:16px;font-weight:700;color:#2d6a4f;margin-bottom:5px}
+.success-text{font-size:13.5px;color:#6b7280}
+
+/* info column */
+.info-col{display:flex;flex-direction:column;gap:14px}
+.info-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:22px}
+.ic-icon{font-size:22px;margin-bottom:10px}
+.ic-title{font-size:14px;font-weight:700;color:#111;margin-bottom:6px}
+.ic-text{font-size:13.5px;color:#6b7280;line-height:1.6;margin-bottom:12px}
+.ic-link{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:#2d6a4f;text-decoration:none;font-weight:500}
+.ic-link:hover{text-decoration:underline}
+.collab-card{background:linear-gradient(135deg,#f0fdf4,#fff);border:1px solid #d1fae5;border-radius:14px;padding:22px}
+.collab-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.collab-name{font-size:15px;font-weight:700;color:#111}
+.collab-handle{font-size:12px;color:#2d6a4f;font-weight:500;margin-top:1px}
+.collab-text{font-size:13px;color:#6b7280;line-height:1.55;margin-bottom:12px}
+.social-pill{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:#374151;background:#fff;border:1px solid #e5e7eb;padding:5px 12px;border-radius:999px;text-decoration:none;transition:border-color .15s,color .15s}
+.social-pill:hover{border-color:#2d6a4f;color:#2d6a4f}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <a class="logo" href="index.html">
+      <span class="logo-icon">🌿</span>
+      <span class="logo-name">Wild India <span>Atlas</span></span>
+      <span class="logo-badge">LIVE</span>
+    </a>
+    <nav class="header-nav" aria-label="Site navigation">
+      <a class="nav-pill" href="index.html">Species</a>
+      <a class="nav-pill" href="map.html">Map</a>
+      <a class="nav-pill" href="about.html">About</a>
+      <a class="nav-pill active" href="contact.html">Contact</a>
+    </nav>
+    <a class="nav-cta" target="_blank" rel="noopener">Live Data Access</a>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="hero-tag">✉️ Get in touch</div>
+    <h1 class="page-h1">Let's talk <span style="color:#2d6a4f">wildlife &amp; data.</span></h1>
+    <p class="page-sub">Collaborate, report a data error, suggest a species, or just say hello — we'd love to hear from you.</p>
+  </div>
+</div>
+
+<div class="contact-wrap">
+
+  <!-- form -->
+  <div class="form-card">
+    <div class="form-title">Send a message</div>
+    <div class="form-sub">We'll get back to you within 2–3 days. For urgent data corrections, please select "Data correction" as the subject.</div>
+    <form id="contactForm" onsubmit="handleSubmit(event)">
+      <div class="frow-2">
+        <div>
+          <label for="c-name">Full name</label>
+          <input type="text" id="c-name" placeholder="Your name" required/>
+        </div>
+        <div>
+          <label for="c-email">Email address</label>
+          <input type="email" id="c-email" placeholder="you@example.com" required/>
+        </div>
+      </div>
+      <div class="frow">
+        <label for="c-subject">Subject</label>
+        <select id="c-subject">
+          <option value="">Select a topic…</option>
+          <option value="collab">Collaboration opportunity</option>
+          <option value="data">Data correction / species update</option>
+          <option value="species">Suggest a species to add</option>
+          <option value="feedback">General feedback</option>
+          <option value="press">Press / media inquiry</option>
+          <option value="other">Something else</option>
+        </select>
+      </div>
+      <div class="frow">
+        <label for="c-msg">Message</label>
+        <textarea id="c-msg" placeholder="Tell us what's on your mind…" required></textarea>
+      </div>
+      <button type="submit" class="submit-btn">Send message →</button>
+      <div class="form-note">We won't share your email with anyone.</div>
+    </form>
+    <div class="success-box" id="successBox">
+      <div class="success-icon">🌿</div>
+      <div class="success-title">Message sent! Thank you.</div>
+      <div class="success-text">We'll get back to you within 2–3 days.</div>
+    </div>
+  </div>
+
+  <!-- info column -->
+  <div class="info-col">
+
+    <div class="info-card">
+      <div class="ic-icon">👤</div>
+      <div class="ic-title">Banajit Rajbongshi</div>
+      <div class="ic-text">M.Sc Physics · Banaras Hindu University. IEEE Published researcher working in ML, reservoir computing and data visualisation.</div>
+      <a class="ic-link" href="https://banajitrajbongshi.netlify.app/" target="_blank" rel="noopener">🌐 Visit personal website ↗</a>
+    </div>
+
+    <div class="info-card">
+      <div class="ic-icon">🐛</div>
+      <div class="ic-title">Found a data error?</div>
+      <div class="ic-text">All 23 species are fact-checked against government sources, but wildlife populations change. If you spot something out of date, let us know — accuracy is the core of this project.</div>
+      <a class="ic-link" href="#" onclick="document.getElementById('c-subject').value='data';document.getElementById('c-msg').focus();return false">Report a data issue →</a>
+    </div>
+
+    <div class="collab-card">
+      <div class="collab-logo-row">
+        <span style="font-size:24px">🎨</span>
+        <div>
+          <div class="collab-name">The Vinci Terminal</div>
+          <div class="collab-handle">@the_vinci_terminal</div>
+        </div>
+      </div>
+      <div class="collab-text">Co-creator of the Wild India Atlas. Follow for more science × design projects.</div>
+      <a class="social-pill" href="https://www.instagram.com/the_vinci_terminal" target="_blank" rel="noopener">📷 Follow on Instagram</a>
+    </div>
+
+    <div class="info-card">
+      <div class="ic-icon">🌿</div>
+      <div class="ic-title">Suggest a species</div>
+      <div class="ic-text">India has over 500 threatened species. We've started with 23 flagship animals but we'd love to expand. Have a species in mind with census data to back it up?</div>
+      <a class="ic-link" href="#" onclick="document.getElementById('c-subject').value='species';document.getElementById('c-msg').focus();return false">Suggest a species →</a>
+    </div>
+
+  </div><!-- /info-col -->
+</div>
+
+<script>
+function handleSubmit(e) {
+  e.preventDefault();
+  document.getElementById('contactForm').style.display = 'none';
+  document.getElementById('successBox').classList.add('show');
+}
+</script>
+
+<div class="footer-wrap">
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <span class="footer-logo-icon">🌿</span>
+          <span class="footer-logo-name">Wild India <span>Atlas</span></span>
+        </div>
+        <p class="footer-tagline">An interactive field guide to India's 23 most threatened species, with live biodiversity data per state.</p>
+        <div class="footer-credit-name">Made by <a href="https://banajitrajbongshi.netlify.app/" target="_blank" rel="noopener">Banajit Rajbongshi</a></div>
+        <div class="footer-collab">in collaboration with <a href="https://www.instagram.com/the_vinci_terminal" target="_blank" rel="noopener">@the_vinci_terminal</a></div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Species</div>
+        <div class="footer-links">
+          <a class="footer-link" href="#">Bengal Tiger 🐅</a>
+          <a class="footer-link" href="#">Asiatic Lion 🦁</a>
+          <a class="footer-link" href="#">One-horned Rhino 🦏</a>
+          <a class="footer-link" href="#">Snow Leopard 🐱</a>
+          <a class="footer-link" href="#">Ganges Dolphin 🐬</a>
+          <a class="footer-link" href="#">All 23 species →</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Data sources</div>
+        <div class="footer-links">
+          <a class="footer-link" href="https://ntca.gov.in" target="_blank" rel="noopener">NTCA · Tiger census</a>
+          <a class="footer-link" href="https://www.iucnredlist.org" target="_blank" rel="noopener">IUCN Red List</a>
+          <a class="footer-link" href="https://www.gbif.org" target="_blank" rel="noopener">GBIF Open Data</a>
+          <a class="footer-link" href="#">Gujarat Forest Dept</a>
+          <a class="footer-link" href="#">SAIEE Elephant Census</a>
+          <a class="footer-link" href="#">WII · SPAI</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Project</div>
+        <div class="footer-links">
+          <a class="footer-link" href="https://wildindiaatlas.netlify.app/" target="_blank" rel="noopener">Live site ↗</a>
+          <a class="footer-link" href="https://banajitrajbongshi.netlify.app/" target="_blank" rel="noopener">About the author</a>
+          <a class="footer-link" href="https://www.instagram.com/the_vinci_terminal" target="_blank" rel="noopener">@the_vinci_terminal</a>
+          <a class="footer-link" href="#">Methodology &amp; sources</a>
+          <a class="footer-link" href="#">Sitemap</a>
+        </div>
+      </div>
+
+    </div><!-- /footer-grid -->
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2025 Banajit Rajbongshi · Wild India Atlas · All population data from public government sources</div>
+      <div class="footer-badges">
+        <a class="footer-badge" href="https://ntca.gov.in" target="_blank" rel="noopener">NTCA</a>
+        <a class="footer-badge" href="https://www.iucnredlist.org" target="_blank" rel="noopener">IUCN</a>
+        <a class="footer-badge" href="https://www.gbif.org" target="_blank" rel="noopener">GBIF</a>
+        <a class="footer-badge" href="https://wildindiaatlas.netlify.app/sitemap.xml" target="_blank" rel="noopener">Sitemap</a>
+      </div>
+    </div>
+
+  </div><!-- /footer-inner -->
+</div><!-- /footer-wrap --
+</body>
+</html>
